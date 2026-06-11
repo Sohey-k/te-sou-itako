@@ -50,9 +50,8 @@ sequenceDiagram
 | フィールド名 | 型 | 説明 | 例 |
 |---|---|---|---|
 | `id` | string | ドキュメントID (自動生成) | `reading_abc123` |
-| `userId` | string | ユーザーID (匿名認証など) | `user_xyz789` |
 | `timestamp` | timestamp | 作成日時 | `2026-06-01T10:00:00Z` |
-| `handImageRef` | string | 手相画像のストレージパス | `users/user_xyz789/hand_abc123.jpg` |
+| `handImageRef` | string | 手相画像のストレージパス | `readings/reading_abc123/hand_image.jpg` |
 | `analysisResult` | map | Gemini Vision APIによる手相解析結果 | `{ "lifeLine": "long", "headLine": "clear", ... }` |
 | `character` | string | 選択されたイタコキャラクター | `徳川家康` |
 | `itakoResult` | string | イタコ占い結果テキスト | `そなたの運命はかくかくしかじかである...` |
@@ -66,16 +65,15 @@ Cloud Functionsのエンドポイント、入力、出力を定義します。
 
 ### 3.1. 手相解析API
 
-- **関数名:** `analyzeHand`
-- **エンドポイント:** `/api/analyzeHand` (例: `https://your-project-id.cloudfunctions.net/analyzeHand`)
-- **HTTPメソッド:** `POST`
+-   **関数名:** `analyzeHand`
+-   **エンドポイント:** `/api/analyzeHand` (例: `https://your-project-id.cloudfunctions.net/analyzeHand`)
+-   **HTTPメソッド:** `POST`
 
 #### 入力 (Request Body)
 
 | フィールド名 | 型 | 必須 | 説明 |
 |---|---|---|---|
 | `imageData` | string | Yes | Base64エンコードされた手相画像データ |
-| `userId` | string | No | ユーザーを識別するためのID (匿名認証など) |
 
 #### 出力 (Response Body)
 
@@ -90,9 +88,9 @@ Cloud Functionsのエンドポイント、入力、出力を定義します。
 
 ### 3.2. イタコ占いAPI
 
-- **関数名:** `getItakoReading`
-- **エンドポイント:** `/api/getItakoReading` (例: `https://your-project-id.cloudfunctions.net/getItakoReading`)
-- **HTTPメソッド:** `POST`
+-   **関数名:** `getItakoReading`
+-   **エンドポイント:** `/api/getItakoReading` (例: `https://your-project-id.cloudfunctions.net/getItakoReading`)
+-   **HTTPメソッド:** `POST`
 
 #### 入力 (Request Body)
 
