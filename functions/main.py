@@ -5,8 +5,7 @@ from datetime import datetime
 
 import firebase_admin
 from firebase_admin import credentials, firestore
-import google.generativeai as genai
-from google.cloud.functions_v2.framework import on_request # Cloud Functions (2nd gen) の場合
+from flask import Request # Cloud Functions (1st gen) の場合
 
 # Firebase Admin SDKの初期化
 # Cloud Functions環境では、サービスアカウントキーを明示的に指定する必要はありません。
@@ -25,8 +24,8 @@ genai.configure(api_key=GEMINI_API_KEY)
 # モデルをgemini-1.5-flashに変更
 gemini_vision_model = genai.GenerativeModel('gemini-1.5-flash')
 
-@on_request
-def analyzeHand(request):
+# @on_request デコレータを削除し、requestオブジェクトの型ヒントを追加
+def analyzeHand(request: Request):
     """
     手相画像を解析し、結果をFirestoreのreadingsコレクションに保存するCloud Function。
     設計書: docs/basic-design.md - 3.1. 手相解析API
