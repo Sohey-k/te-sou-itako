@@ -51,7 +51,6 @@ sequenceDiagram
 |---|---|---|---|
 | `id` | string | ドキュメントID (自動生成) | `reading_abc123` |
 | `timestamp` | timestamp | 作成日時 | `2026-06-01T10:00:00Z` |
-| `handImageRef` | string | 手相画像のストレージパス | `readings/reading_abc123/hand_image.jpg` |
 | `analysisResult` | map | Gemini Vision APIによる手相解析結果 | `{ "lifeLine": "long", "headLine": "clear", ... }` |
 | `character` | string | 選択されたイタコキャラクター | `徳川家康` |
 | `itakoResult` | string | イタコ占い結果テキスト | `そなたの運命はかくかくしかじかである...` |

@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 import firebase_admin
-from firebase_admin import credentials, firestore, storage
+from firebase_admin import credentials, firestore
 import google.generativeai as genai
 from google.cloud.functions_v2.framework import on_request # Cloud Functions (2nd gen) の場合
 
@@ -14,9 +14,6 @@ from google.cloud.functions_v2.framework import on_request # Cloud Functions (2n
 # デフォルトのサービスアカウントが自動的に使用されます。
 firebase_admin.initialize_app()
 db = firestore.client()
-# デフォルトのCloud Storageバケットを取得
-# プロジェクトIDに基づいて 'your-project-id.appspot.com' の形式になります
-bucket = storage.bucket() 
 
 # Gemini APIの初期化
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
@@ -25,7 +22,8 @@ if not GEMINI_API_KEY:
     # Cloud Functionsのデプロイ時に環境変数を設定する必要があります
     raise ValueError("GEMINI_API_KEY環境変数が設定されていません。")
 genai.configure(api_key=GEMINI_API_KEY)
-gemini_vision_model = genai.GenerativeModel('gemini-pro-vision')
+# モデルをgemini-1.5-flashに変更
+gemini_vision_model = genai.GenerativeModel('gemini-1.5-flash')
 
 @on_request
 def analyzeHand(request):
@@ -51,20 +49,14 @@ def analyzeHand(request):
         new_reading_ref = db.collection('readings').document()
         reading_id = new_reading_ref.id
 
-        # Cloud Storageに画像を保存
-        # パスは設計書の例 'readings/reading_abc123/hand_image.jpg' に従う
-        image_path_in_storage = f"readings/{reading_id}/hand_image.jpg"
-        blob = bucket.blob(image_path_in_storage)
-        # 画像のMIMEタイプは、アップロードされる画像形式によって調整が必要
-        # ここでは一般的なJPEGを想定
-        blob.upload_from_string(image_bytes, content_type='image/jpeg') 
+        # Cloud Storageへの画像保存処理は削除。画像はメモリ上で処理し破棄される。
 
         # Gemini Vision APIに送信するプロンプトと画像データ
         # 手相の特徴をJSON形式で抽出するように指示
         prompt_parts = [
             "Analyze this hand image for palmistry features. Identify and describe the major lines (life, head, heart, fate, sun, mercury), major mounts (Venus, Jupiter, Saturn, Apollo, Mercury, Mars, Luna), and any significant markings (stars, squares, crosses, islands). Summarize these features in a structured JSON format. For example: {\"lifeLine\": {\"length\": \"long\", \"depth\": \"deep\", \"description\": \"...\"}, \"headLine\": {\"length\": \"medium\", \"type\": \"straight\", \"description\": \"...\"}, ...}. Provide only the JSON output.",
             {
-                "mime_type": "image/jpeg", # Cloud StorageにアップロードしたMIMEタイプと合わせる
+                "mime_type": "image/jpeg", # アップロードされる画像形式によって調整が必要
                 "data": image_bytes
             }
         ]
@@ -86,9 +78,9 @@ def analyzeHand(request):
             return {'success': False, 'error': f'Error processing Gemini response: {str(e)}'}, 500
 
         # Firestoreに解析結果を保存
+        # handImageRefフィールドは削除
         new_reading_ref.set({
             'timestamp': firestore.SERVER_TIMESTAMP, # サーバー側でタイムスタンプを生成
-            'handImageRef': image_path_in_storage,
             'analysisResult': analysis_result_json,
             'character': None, # 初期状態ではキャラクターは未選択
             'itakoResult': None, # 初期状態では占い結果はなし
