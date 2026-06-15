@@ -32,12 +32,24 @@ def analyzeHand(req: https_fn.Request) -> https_fn.Response:
     手相画像を解析し、結果をFirestoreのreadingsコレクションに保存するCloud Function。
     設計書: docs/basic-design.md - 3.1. 手相解析API
     """
+    # CORSヘッダーの定義
+    cors_headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+    }
+    
+    # OPTIONSメソッド（プリフライトリクエスト）への対応
+    if req.method == 'OPTIONS':
+        return https_fn.Response('', status=204, headers=cors_headers)
+    
     # HTTPメソッドがPOSTであることを確認
     if req.method != 'POST':
         return https_fn.Response(
             json.dumps({'success': False, 'error': 'Method Not Allowed'}),
             status=405,
-            mimetype='application/json'
+            mimetype='application/json',
+            headers=cors_headers
         )
 
     try:
@@ -47,7 +59,8 @@ def analyzeHand(req: https_fn.Request) -> https_fn.Response:
             return https_fn.Response(
                 json.dumps({'success': False, 'error': 'Invalid request body. "imageData" is required.'}),
                 status=400,
-                mimetype='application/json'
+                mimetype='application/json',
+                headers=cors_headers
             )
 
         image_data_base64 = request_json['imageData']
@@ -93,14 +106,16 @@ def analyzeHand(req: https_fn.Request) -> https_fn.Response:
             return https_fn.Response(
                 json.dumps({'success': False, 'error': 'Failed to parse Gemini Vision API response as JSON.'}),
                 status=500,
-                mimetype='application/json'
+                mimetype='application/json',
+                headers=cors_headers
             )
         except Exception as e:
             print(f"Error processing Gemini response: {e}")
             return https_fn.Response(
                 json.dumps({'success': False, 'error': f'Error processing Gemini response: {str(e)}'}),
                 status=500,
-                mimetype='application/json'
+                mimetype='application/json',
+                headers=cors_headers
             )
 
         # Firestoreに解析結果を保存
@@ -117,7 +132,8 @@ def analyzeHand(req: https_fn.Request) -> https_fn.Response:
         return https_fn.Response(
             json.dumps({'success': True, 'readingId': reading_id, 'message': 'Hand analysis initiated successfully.'}),
             status=200,
-            mimetype='application/json'
+            mimetype='application/json',
+            headers=cors_headers
         )
 
     except ValueError as ve:
@@ -126,7 +142,8 @@ def analyzeHand(req: https_fn.Request) -> https_fn.Response:
         return https_fn.Response(
             json.dumps({'success': False, 'error': str(ve)}),
             status=400,
-            mimetype='application/json'
+            mimetype='application/json',
+            headers=cors_headers
         )
     except Exception as e:
         # その他の予期せぬエラー
@@ -134,7 +151,8 @@ def analyzeHand(req: https_fn.Request) -> https_fn.Response:
         return https_fn.Response(
             json.dumps({'success': False, 'error': f'Internal Server Error: {str(e)}'}),
             status=500,
-            mimetype='application/json'
+            mimetype='application/json',
+            headers=cors_headers
         )
 
 
@@ -144,12 +162,24 @@ def getItakoReading(req: https_fn.Request) -> https_fn.Response:
     手相解析結果をキャラクターに基づいて占い結果に変換するCloud Function。
     設計書: docs/basic-design.md - 3.2. 占い解析API
     """
+    # CORSヘッダーの定義
+    cors_headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+    }
+    
+    # OPTIONSメソッド（プリフライトリクエスト）への対応
+    if req.method == 'OPTIONS':
+        return https_fn.Response('', status=204, headers=cors_headers)
+    
     # HTTPメソッドがPOSTであることを確認
     if req.method != 'POST':
         return https_fn.Response(
             json.dumps({'success': False, 'error': 'Method Not Allowed'}),
             status=405,
-            mimetype='application/json'
+            mimetype='application/json',
+            headers=cors_headers
         )
 
     try:
@@ -159,7 +189,8 @@ def getItakoReading(req: https_fn.Request) -> https_fn.Response:
             return https_fn.Response(
                 json.dumps({'success': False, 'error': 'Invalid request body. "readingId" and "character" are required.'}),
                 status=400,
-                mimetype='application/json'
+                mimetype='application/json',
+                headers=cors_headers
             )
 
         reading_id = request_json['readingId']
@@ -171,7 +202,8 @@ def getItakoReading(req: https_fn.Request) -> https_fn.Response:
             return https_fn.Response(
                 json.dumps({'success': False, 'error': f'Invalid character. Must be one of {valid_characters}.'}),
                 status=400,
-                mimetype='application/json'
+                mimetype='application/json',
+                headers=cors_headers
             )
 
         # Firestoreから手相解析結果を取得
@@ -180,7 +212,8 @@ def getItakoReading(req: https_fn.Request) -> https_fn.Response:
             return https_fn.Response(
                 json.dumps({'success': False, 'error': f'Reading with ID {reading_id} not found.'}),
                 status=404,
-                mimetype='application/json'
+                mimetype='application/json',
+                headers=cors_headers
             )
 
         analysis_result = reading_doc.get('analysisResult')
@@ -188,7 +221,8 @@ def getItakoReading(req: https_fn.Request) -> https_fn.Response:
             return https_fn.Response(
                 json.dumps({'success': False, 'error': f'No analysis result found for reading {reading_id}.'}),
                 status=400,
-                mimetype='application/json'
+                mimetype='application/json',
+                headers=cors_headers
             )
 
         # キャラクターに応じたプロンプトを作成
@@ -256,14 +290,16 @@ def getItakoReading(req: https_fn.Request) -> https_fn.Response:
             return https_fn.Response(
                 json.dumps({'success': False, 'error': 'Failed to parse Gemini API response as JSON.'}),
                 status=500,
-                mimetype='application/json'
+                mimetype='application/json',
+                headers=cors_headers
             )
         except Exception as e:
             print(f"Error processing Gemini response: {e}")
             return https_fn.Response(
                 json.dumps({'success': False, 'error': f'Error processing Gemini response: {str(e)}'}),
                 status=500,
-                mimetype='application/json'
+                mimetype='application/json',
+                headers=cors_headers
             )
 
         # Firestoreに占い結果を保存
@@ -278,7 +314,8 @@ def getItakoReading(req: https_fn.Request) -> https_fn.Response:
         return https_fn.Response(
             json.dumps({'success': True, 'readingId': reading_id, 'character': character, 'itakoResult': itako_result_json}),
             status=200,
-            mimetype='application/json'
+            mimetype='application/json',
+            headers=cors_headers
         )
 
     except Exception as e:
@@ -287,5 +324,6 @@ def getItakoReading(req: https_fn.Request) -> https_fn.Response:
         return https_fn.Response(
             json.dumps({'success': False, 'error': f'Internal Server Error: {str(e)}'}),
             status=500,
-            mimetype='application/json'
+            mimetype='application/json',
+            headers=cors_headers
         )
