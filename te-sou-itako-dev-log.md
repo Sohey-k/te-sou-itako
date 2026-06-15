@@ -10,7 +10,7 @@
 |------|------|
 | アプリ名 | 手相イタコ占い（Te-Sou Itako） |
 | 開発期間 | 2026年6月〜 |
-| 構成 | React + Firebase Hosting + Cloud Functions (Node.js/Express) + Gemini API |
+| 構成 | React + Firebase Hosting + Cloud Functions (Python) + Gemini API |
 | 開発エージェント | Aider（Gemini 2.5 Flash） |
 | コスト | 実質0円（全て無料枠） |
 
@@ -19,11 +19,11 @@
 ```
 📸 手相画像（スマホ撮影 or アップロード）
     ↓
-⚡ Cloud Functions (Node.js/Express)：
-    1. Gemini Vision API → 手相解析JSON
-    2. キャラプロンプト + JSON → イタコ出力
+⚡ Cloud Functions Python①：Gemini Vision API → 手相解析JSON
     ↓
-🗄️ Firestore：JSON保存（必要に応じて）
+🗄️ Firestore：JSON保存
+    ↓
+⚡ Cloud Functions Python②：キャラプロンプト + JSON → イタコ出力
     ↓
 🎭 フロントエンド（React + Firebase Hosting）
 ```
@@ -140,8 +140,13 @@ aider --version
 
 ```bash
 cd te-sou-itako
-aider --model gemini/gemini-2.5-flash
+
+# .envファイルを明示的に指定して起動（GCP環境変数が混在する場合は必須）
+aider --model gemini/gemini-2.5-flash --env-file .env
 ```
+
+> **ポイント：** GCPの開発経験がある環境では`--env-file .env`を明示しないと
+> VertexAI経由で接続しようとしてエラーになる場合がある。
 
 <!-- 完了後に追記 -->
 
@@ -172,7 +177,7 @@ firebase init
 ```
 te-sou-itako/
 ├── frontend/          # React（Vite）
-├── functions/         # Cloud Functions（Node.js/Express）
+├── functions/         # Cloud Functions（Python）
 ├── firebase.json
 ├── .firebaserc
 └── .gitignore
@@ -182,26 +187,41 @@ te-sou-itako/
 
 ---
 
-## Step 5：Cloud Functions実装（Expressバックエンド）
+## Step 5：Cloud Functions実装（手相解析）
 
 ### 概要
 
-- 入力：手相画像（base64）と選択キャラクター
-- 処理：
-    1. Gemini Vision APIで手相特徴を解析
-    2. 解析結果とキャラプロンプトをGemini APIに送信し、イタコ風占い結果を生成
-- 出力：イタコ風占い結果テキスト（必要に応じてFirestoreに手相特徴JSONを保存）
+- 入力：手相画像（base64）
+- 処理：Gemini Vision APIで手相特徴を解析
+- 出力：手相特徴JSON → Firestoreに保存
 
-```javascript
-// functions/index.js (Expressアプリケーションをここに実装)
-// ここに追記
+```python
+# functions/analyzer/main.py
+# ここに追記
 ```
 
 <!-- 完了後に追記 -->
 
 ---
 
-## Step 6：フロントエンド実装（React）
+## Step 6：Cloud Functions実装（イタコ出力）
+
+### 概要
+
+- 入力：手相特徴JSON + 選択キャラクター
+- 処理：キャラプロンプト + JSONをGemini APIに送信
+- 出力：イタコ風占い結果テキスト
+
+```python
+# functions/itako/main.py
+# ここに追記
+```
+
+<!-- 完了後に追記 -->
+
+---
+
+## Step 7：フロントエンド実装（React）
 
 ### 1. Viteでプロジェクト作成
 
@@ -229,7 +249,7 @@ npm install
 
 ---
 
-## Step 7：Firebase Hostingデプロイ
+## Step 8：Firebase Hostingデプロイ
 
 ```bash
 cd frontend
@@ -243,7 +263,39 @@ firebase deploy
 
 ## 詰まったポイント・気づき
 
-<!-- 開発中に随時追記 -->
+### Gemini API 503エラー（VertexAIException）
+
+無料枠ではサーバー過負荷により503が頻発することがある。
+
+```
+litellm.ServiceUnavailableError: VertexAIException
+"message": "This model is currently experiencing high demand."
+```
+
+Aiderが自動でExponential Backoffリトライしてくれるので基本は待つだけでOK。
+
+```
+Retrying in 0.2 seconds...
+Retrying in 0.5 seconds...
+Retrying in 1.0 seconds...
+Retrying in 2.0 seconds...
+```
+
+頻発する場合は軽量モデルに切り替えると改善する場合がある。
+
+```bash
+aider --model gemini/gemini-2.5-flash-lite --env-file .env
+```
+
+### GCP環境変数とGemini APIキーの競合
+
+GCPの開発経験がある環境では、環境変数にGCP認証情報が残っていると
+AiderがVertexAI経由で接続しようとしてエラーになる場合がある。
+`--env-file .env` を明示的に指定することで回避できる。
+
+```bash
+aider --model gemini/gemini-2.5-flash --env-file .env
+```
 
 ---
 
