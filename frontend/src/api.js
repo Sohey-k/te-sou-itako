@@ -2,7 +2,7 @@
 const USE_MOCK = false;
 
 // APIのURLは環境変数から取得
-const ANALYZE_API_URL = import.meta.env.VITE_ANALYZE_URL || 'http://localhost:5001/te-sou-itako-dev/us-central1/analyzeHand';
+const ANALYZE_API_URL = import.meta.env.VITE_ANALYZE_URL || 'https://us-central1-te-sou-itako-f7136.cloudfunctions.net/analyzeHand';
 // getItakoReading関数が削除されるため、ITAKO_API_URLは不要になります。
 
 /**

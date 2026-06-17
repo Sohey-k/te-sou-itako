@@ -144,3 +144,4 @@ vite.config.ts.timestamp-*
 .env
 .aider*
 test-images/
+frontend/.env.local
