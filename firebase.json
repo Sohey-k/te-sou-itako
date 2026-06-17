@@ -25,7 +25,10 @@
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "functions/**",
+      "**/venv/**",
+      "frontend/node_modules/**"
     ],
     "rewrites": [
       {
