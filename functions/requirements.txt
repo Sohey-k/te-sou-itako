@@ -2,3 +2,4 @@ google-genai
 google-cloud-firestore
 firebase-admin
 firebase-functions
+Pillow

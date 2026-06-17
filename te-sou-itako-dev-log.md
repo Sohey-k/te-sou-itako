@@ -1,6 +1,6 @@
 # 🔮 手相イタコ占いアプリ 開発ログ
 
-> GeminiAPI × Firebase × Aider で爆速プロトタイプを作る
+> Gemini無料(のはずだった・・・)API × Firebase × Aider で爆速（のはずだった）プロトタイプを作る
 
 ---
 
@@ -12,7 +12,7 @@
 | 開発期間 | 2026年6月〜 |
 | 構成 | React + Firebase Hosting + Cloud Functions (Python) + Gemini API |
 | 開発エージェント | Aider（Gemini 2.5 Flash） |
-| コスト | 実質2000円（API前払い） |
+| コスト | 実質0円（AIのトークン量に多少資金投入） |
 
 ### アーキテクチャ
 
@@ -41,9 +41,9 @@
 
 ## 開発環境
 
-- OS：Windows 11 + WSL2（almalinux）
+- OS：Windows 11 + WSL2（AlmaLinux 9）
 - エディタ：VSCode
-- 開発エージェント：Aider Glaude Gmemini 2.5 Flash
+- 開発エージェント：Aider Gemini 2.5 Flash Claude
 - AIバックエンド：Gemini API（無料枠）
 
 ---
@@ -61,8 +61,8 @@
 
 GitHubでリポジトリ作成後、クローンするだけでOK。
 `git init` も `git remote add` も不要（clone が自動でやってくれる）。
-※やってくれませんでした💦
-git push する場合、最初の1回だけ `git remote add origin <URL>` が必要です。
+
+※git remote add originは必要です。
 
 ```bash
 cd ~/projects
@@ -80,6 +80,8 @@ echo ".env" >> .gitignore
 ```
 
 > **注意：APIキーは絶対に .env に入れてコミットしない！**
+
+<!-- 完了後に追記 -->
 
 ---
 
@@ -107,6 +109,8 @@ echo "GEMINI_API_KEY=AIzaSyあなたの本物のキー" > .env
 ```bash
 cat .env
 ```
+
+<!-- 完了後に追記 -->
 
 ---
 
@@ -145,6 +149,8 @@ aider --model gemini/gemini-2.5-flash --env-file .env
 
 > **ポイント：** GCPの開発経験がある環境では`--env-file .env`を明示しないと
 > VertexAI経由で接続しようとしてエラーになる場合がある。
+
+<!-- 完了後に追記 -->
 
 ---
 
@@ -224,24 +230,26 @@ te-sou-itako/
 
 ### 実装方針
 
-- `functions/main.py` 一枚に`analyzeHand`のみ実装
-- **完全な新SDK（google-genai）を使用**し、古い非推奨警告（FutureWarning）をパージ
-- **APIのConfigでJSONモード（response_mime_type）を明示指定し、パースエラーを防止**
-- CORS設定はFirebase Functions標準のデコレータオプション（cors=...）でセキュアかつ簡潔に自動解決
-- すべてのレスポンスは辞書型ではなく https_fn.Response オブジェクトにラップして返却
+- `functions/main.py` 一枚に`analyzeHand`のみ実装（getItakoReadingは不要）
+- **新SDK（google.genai）を使用**
+- **JSONモード（response_mime_type='application/json'）でマークダウン除去処理が不要**
+- Cloud Storageへの画像保存は行わない（メモリ上で処理して破棄）
+- モデルは `gemini-1.5-flash` を使用
 
-### functions/main.py
+### functions/main.py（主要部分）
 
 ```python
 import os
 import base64
 import json
+import io
+from PIL import Image # 画像リサイズ用
 
 import firebase_admin
 from firebase_admin import credentials, firestore
 from firebase_functions import https_fn
 from google import genai
-from google.genai import types
+from google.genai.types import Part # 新SDKのPart型を使用
 
 firebase_admin.initialize_app()
 db = firestore.client()
@@ -249,91 +257,115 @@ db = firestore.client()
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 if not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY環境変数が設定されていません。")
+genai.configure(api_key=GEMINI_API_KEY)
+# 1発合体版ではVisionとTextの両方を扱える単一のモデルを使用
+gemini_model = genai.GenerativeModel('gemini-1.5-flash')
 
-# 最新SDK（google-genai）のクライアント初期化
-client = genai.Client(api_key=GEMINI_API_KEY)
+ALLOWED_CHARACTERS = ['徳川家康', '織田信長', 'アインシュタイン', '卑弥呼']
 
-@https_fn.on_request(cors=https_fn.CorsOptions(cors_origins=["*"], cors_methods=["POST", "OPTIONS"]))
+CHARACTER_PERSONAS = {
+    '徳川家康': "あなたは戦国武将・徳川家康です。重厚で忍耐強く、武士の精神を持ち、古風な武士語で話します。厳格で堂々とした口調で、長期的な視点から人生の重要な局面と対策を示してください。手相の分析結果に基づいて、この人物の運命、性格、そして取るべき行動について、家康の視点から具体的な助言を与えてください。出力は必ずJSON形式で、analysisResultとitakoResultの2つのキーを含み、itakoResultはinterpretation, advice, futureの3つのキーを持つようにしてください。",
+    '織田信長': "あなたは戦国武将・織田信長です。断定的で傲慢、天下布武の大志を持ち、決断力と直言で知られています。断定的で力強い口調で、この人が何を成し遂げるべきか、そして野心と目標達成に必要なことについて、信長の視点から具体的な助言を与えてください。出力は必ずJSON形式で、analysisResultとitakoResultの2つのキーを含み、itakoResultはinterpretation, advice, futureの3つのキーを持つようにしてください。",
+    'アインシュタイン': "あなたは物理学者・アルベルト・アインシュタインです。論理的で思弁的、相対性理論の視点から世界を見つめます。論理的で深い洞察に満ちた口調で、時間と運命の相対性、そしてこの人物の知的な可能性について、アインシュタインの視点から具体的な助言を与えてください。出力は必ずJSON形式で、analysisResultとitakoResultの2つのキーを含み、itakoResultはinterpretation, advice, futureの3つのキーを持つようにしてください。",
+    '卑弥呼': "あなたは古代日本の女王・卑弥呼です。神秘的で霊的な力を持ち、古語を交えて話し、見えない世界と繋がっています。神秘的で古風な口調で、この人が持つ霊的な力、過去世との繋がり、そして未来の啓示について、卑弥呼の視点から具体的な助言を与えてください。出力は必ずJSON形式で、analysisResultとitakoResultの2つのキーを含み、itakoResultはinterpretation, advice, futureの3つのキーを持つようにしてください。"
+}
+
+@https_fn.on_request()
 def analyzeHand(req: https_fn.Request) -> https_fn.Response:
-    if req.method != 'POST':
-        return https_fn.Response(
-            json.dumps({'success': False, 'error': 'Method Not Allowed'}), 
-            status=405, 
-            mimetype='application/json'
-        )
+    cors_headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+    }
+
+    if req.method == 'OPTIONS':
+        return https_fn.Response('', status=204, headers=cors_headers)
 
     try:
         request_json = req.get_json(silent=True)
-        if not request_json or 'imageData' not in request_json:
-            return https_fn.Response(
-                json.dumps({'success': False, 'error': 'Invalid request body. "imageData" is required.'}), 
-                status=400, 
-                mimetype='application/json'
-            )
+        if not request_json:
+            return https_fn.Response(json.dumps({'success': False, 'error': 'Invalid request body.'}),
+                                     status=400, mimetype='application/json', headers=cors_headers)
 
-        image_bytes = base64.b64decode(request_json['imageData'])
-        character = request_json.get('character', '徳川家康')
+        image_data_base64 = request_json.get('imageData')
+        character_name = request_json.get('character')
+
+        if not image_data_base64:
+            return https_fn.Response(json.dumps({'success': False, 'error': '"imageData" is required.'}),
+                                     status=400, mimetype='application/json', headers=cors_headers)
+        if not character_name:
+            return https_fn.Response(json.dumps({'success': False, 'error': '"character" is required.'}),
+                                     status=400, mimetype='application/json', headers=cors_headers)
+        if character_name not in ALLOWED_CHARACTERS:
+            return https_fn.Response(json.dumps({'success': False, 'error': f'Invalid character: {character_name}. Allowed characters are: {", ".join(ALLOWED_CHARACTERS)}'}),
+                                     status=400, mimetype='application/json', headers=cors_headers)
+
+        # 画像のデコードとリサイズ
+        decoded_image_data = base64.b64decode(image_data_base64)
+        img = Image.open(io.BytesIO(decoded_image_data))
+        
+        # 画像が大きすぎる場合はリサイズ
+        max_dim = 1024
+        if img.width > max_dim or img.height > max_dim:
+            img.thumbnail((max_dim, max_dim), Image.LANCZOS)
+        
+        output_buffer = io.BytesIO()
+        img.save(output_buffer, format="JPEG", quality=85) # JPEG形式で品質85で保存
+        processed_image_bytes = output_buffer.getvalue()
 
         new_reading_ref = db.collection('readings').document()
         reading_id = new_reading_ref.id
 
-        # 画像データとプロンプトのパッキング（新SDKスタイル）
+        persona_prompt = CHARACTER_PERSONAS[character_name]
+        
+        # VisionとTextを組み合わせたプロンプト
         prompt_parts = [
-            types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"),
-            f"Analyze this hand image for palmistry features and provide a fortune telling reading as the character: {character}. Provide only the JSON output."
+            Part.from_text("以下の手相画像を詳細に分析し、その特徴（生命線、知能線、感情線など）を客観的に記述してください。その後、選択されたキャラクターのペルソナ（" + persona_prompt + "）になりきり、手相の分析結果に基づいて、その人物の運命、性格、そして取るべき行動について具体的な助言を与えてください。出力は必ずJSON形式で、analysisResultとitakoResultの2つのキーを含み、itakoResultはinterpretation, advice, futureの3つのキーを持つようにしてください。"),
+            Part.from_bytes(data=processed_image_bytes, mime_type="image/jpeg")
         ]
 
-        # 明示的なJSONモードをコンフィグで指定して生成
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt_parts,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-            ),
-        )
+        response = gemini_model.generate_content(prompt_parts,
+                                                generation_config=genai.GenerationConfig(response_mime_type='application/json'))
 
         try:
-            # 新SDKは response.text でストレートに中身を取得可能
-            gemini_output_text = response.text
-            analysis_result_json = json.loads(gemini_output_text)
-        except (json.JSONDecodeError, TypeError):
-            return https_fn.Response(
-                json.dumps({'success': False, 'error': 'Failed to parse Gemini API response as JSON.'}), 
-                status=500, 
-                mimetype='application/json'
-            )
+            gemini_output_text = "".join([part.text for part in response.parts])
+            combined_result = json.loads(gemini_output_text)
+            
+            analysis_result = combined_result.get('analysisResult')
+            itako_result = combined_result.get('itakoResult')
 
-        # Firestoreへ構造化保存
+            if not analysis_result or not itako_result:
+                 raise ValueError("Gemini API response did not contain expected 'analysisResult' or 'itakoResult' keys.")
+
+        except json.JSONDecodeError as e:
+            print(f"JSON Decode Error: {e}")
+            print(f"Gemini Raw Output: {gemini_output_text}")
+            return https_fn.Response(json.dumps({'success': False, 'error': 'Failed to parse Gemini API response as JSON.'}),
+                                     status=500, mimetype='application/json', headers=cors_headers)
+        except ValueError as e:
+            print(f"Value Error: {e}")
+            print(f"Gemini Raw Output: {gemini_output_text}")
+            return https_fn.Response(json.dumps({'success': False, 'error': str(e)}),
+                                     status=500, mimetype='application/json', headers=cors_headers)
+
         new_reading_ref.set({
             'timestamp': firestore.SERVER_TIMESTAMP,
-            'analysisResult': analysis_result_json.get('analysisResult', analysis_result_json),
-            'character': character,
-            'itakoResult': analysis_result_json.get('itakoResult', analysis_result_json),
-            'status': 'itako_completed'
+            'analysisResult': analysis_result,
+            'character': character_name,
+            'itakoResult': itako_result,
+            'status': 'itako_completed' # 1発合体版なので完了ステータス
         })
 
-        return https_fn.Response(
-            json.dumps({
-                'success': True, 
-                'readingId': reading_id, 
-                'result': analysis_result_json
-            }), 
-            status=200, 
-            mimetype='application/json'
-        )
+        return https_fn.Response(json.dumps({'success': True, 'readingId': reading_id, 'result': combined_result}),
+                                 status=200, mimetype='application/json', headers=cors_headers)
 
     except ValueError as ve:
-        return https_fn.Response(
-            json.dumps({'success': False, 'error': str(ve)}), 
-            status=400, 
-            mimetype='application/json'
-        )
+        return https_fn.Response(json.dumps({'success': False, 'error': str(ve)}),
+                                 status=400, mimetype='application/json', headers=cors_headers)
     except Exception as e:
-        return https_fn.Response(
-            json.dumps({'success': False, 'error': f'Internal Server Error: {str(e)}'}), 
-            status=500, 
-            mimetype='application/json'
-        )
+        print(f"Unhandled Exception: {e}")
+        return https_fn.Response(json.dumps({'success': False, 'error': f'Internal Server Error: {str(e)}'}),
+                                 status=500, mimetype='application/json', headers=cors_headers)
 ```
 
 ### functions/requirements.txt
@@ -341,39 +373,49 @@ def analyzeHand(req: https_fn.Request) -> https_fn.Response:
 ```
 firebase-functions~=0.5.0
 firebase-admin>=6.0.0
-google-genai>=0.1.0
+google-genai>=0.8.0 # google-generativeai から変更
 flask>=3.0.0
-python-dotenv>=1.0.0
+Pillow>=10.0.0 # 画像リサイズ用に追加
 ```
 
 ### APIキーの扱い
 
-- **ローカル開発時：** functions/.envから読み込み（詳細はトラブルシューティングを参照）
-- **デプロイ時：** Secret Managerに登録してsecureに管理
+- **ローカル開発時：** `.env`から`os.environ.get('GEMINI_API_KEY')`で読み込み
+- **デプロイ時：** Secret Managerに登録が必要（後述のStep 8で対応）
 
 ```bash
 firebase functions:secrets:set GEMINI_API_KEY
 ```
 
+<!-- ローカルテスト完了後に追記 -->
+
 ---
 
 ## Step 6：バックエンドリファクタリング（1発合体版への移行）
 
-### リファクタリングの背景と成果
+### リファクタリングの背景
 
-初期想定の2回API呼び出し構成から「1発合体版」に移行したことで、インフラ・アプリ性能面で大幅な改善を達成。
+初期実装では`analyzeHand`と`getItakoReading`の2回APIを呼び出していたが、
+以下の問題が発生したため1発合体版にリファクタリングした。
 
-- 2回連続コールによるレートリミット（429エラー）の完全回避
-- 合計処理時間を30〜40秒へ短縮し、Cloud Functionsのタイムアウトリスクをパージ
-- google-genaiへの完全刷新によりFutureWarningを消滅
-- クライアント側へは readingId と result（解析＋占い結果）を1つのレスポンスで返すシームレスなパイプラインを確立
+- 2回連続でAPIを叩くとレートリミット（429エラー）が発生しやすい
+- 合計処理時間が60秒以上になりタイムアウトのリスクがある
+- Geminiのレスポンスがマークダウンで囲まれてパースエラーが頻発
 
+### 移行内容
+
+| 項目 | 旧実装 | 新実装 |
+|------|--------|--------|
+| API呼び出し回数 | 2回（analyzeHand + getItakoReading） | 1回（analyzeHand のみ） |
+| SDK | google-generativeai（廃止済み） | google-genai（最新） |
+| JSONパース | マークダウン除去処理が必要 | JSONモードで不要 |
+| フロントからの引数 | imageData のみ | imageData + character |
+| レスポンス | readingId のみ | readingId + result（analysisResult + itakoResult） |
 
 ### 新しいvenvパッケージインストール
 
 ```bash
 cd ~/te-sou-itako/te-sou-itako/functions
-python3.14 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
@@ -385,33 +427,19 @@ pip install -r requirements.txt
 - FutureWarning完全消滅
 - Firestoreへの保存も正常完了（status: itako_completed）
 
+<!-- デプロイ後に追記 -->
+
 ---
 
 ## Step 7：フロントエンド実装前の準備
 
 フロントエンド実装に入る前に、以下の3つを確認・対応しておく。
 
-### 7-1. マークダウン除去処理の確認
+### 7-1. JSONモードによるパースエラーの根本解決（旧課題と新SDKでの解決）
 
-Gemini APIがJSONをマークダウンのコードブロックで囲んで返す場合があるため、
-`json.loads()`の前に除去処理を追加する。
+旧SDKやJSONモード非対応のモデルでは、Gemini APIがJSONをマークダウンのコードブロック（例: ```` ```json ... ``` ````）で囲んで返すことがあり、`json.loads()`が失敗する問題がありました。このため、以前はレスポンステキストからマークダウン記号を除去する文字列操作が必要でした。
 
-```python
-gemini_output_text = gemini_output_text.strip()
-if gemini_output_text.startswith('```json'):
-    gemini_output_text = gemini_output_text[7:]
-elif gemini_output_text.startswith('```'):
-    gemini_output_text = gemini_output_text[3:]
-if gemini_output_text.endswith('```'):
-    gemini_output_text = gemini_output_text[:-3]
-gemini_output_text = gemini_output_text.strip()
-```
-
-確認コマンド：
-
-```bash
-grep -n 'strip' ~/te-sou-itako/te-sou-itako/functions/main.py
-```
+しかし、**新SDK（`google-genai`）と`gemini-1.5-flash`モデルの`response_mime_type='application/json'`オプションを使用することで、Gemini APIは純粋なJSON形式でレスポンスを返すようになり、これらの文字列操作による除去処理は100%不要になりました。** これにより、パースエラーのリスクが大幅に低減し、コードがよりシンプルかつ堅牢になりました。
 
 ### 7-2. Firestoreセキュリティルールの更新
 
@@ -643,13 +671,103 @@ npm run dev
 
 ## Step 9：Firebase Hostingデプロイ
 
+### 1. firebase.jsonのhosting.publicを修正
+
+デフォルトは`public`になっているが、Viteのビルド出力は`frontend/dist/`なので変更が必要。
+
 ```bash
-cd frontend
-npm run build
-firebase deploy
+sed -i 's/"public": "public"/"public": "frontend\/dist"/' firebase.json
+
+# 確認
+cat firebase.json | grep public
+# → "public": "frontend/dist" になっていればOK
 ```
 
-<!-- 完了後に追記 -->
+### 2. 本番用環境変数を作成
+
+```bash
+cat > ~/te-sou-itako/te-sou-itako/frontend/.env.production << 'EOF'
+VITE_ANALYZE_URL=https://us-central1-te-sou-itako-f7136.cloudfunctions.net/analyzeHand
+EOF
+```
+
+### 3. Cloud Functionsをデプロイ
+
+```bash
+cd ~/te-sou-itako/te-sou-itako
+firebase deploy --only functions
+```
+
+デプロイ完了後に本番URLが表示される：
+
+```
+Function URL (analyzeHand(us-central1)):
+https://us-central1-te-sou-itako-f7136.cloudfunctions.net/analyzeHand
+```
+
+### 4. 本番Firestoreを作成
+
+Firebase Consoleから作成する（CLIでは作成不可）。
+
+1. https://console.firebase.google.com/project/te-sou-itako-f7136/firestore にアクセス
+2. 「データベースを作成」をクリック
+3. エディション：**Standard**を選択
+4. データベースID：`(default)`のまま
+5. ロケーション：**asia-northeast2（大阪）**を選択
+6. 「作成」をクリック
+
+> **注意：** Firestoreを作成しないとCloud Functionsから以下のエラーが発生する。
+> ```
+> 404 The database (default) does not exist for project te-sou-itako-f7136
+> ```
+
+### 5. フロントエンドをビルド
+
+```bash
+cd ~/te-sou-itako/te-sou-itako/frontend
+npm run build
+```
+
+### 6. Firebase Hostingにデプロイ
+
+```bash
+cd ~/te-sou-itako/te-sou-itako
+firebase deploy --only hosting
+```
+
+### 7. 本番URLで動作確認
+
+```
+https://te-sou-itako-f7136.web.app/
+```
+
+**動作確認結果：**
+
+```
+✅ フロントエンド（Firebase Hosting）
+✅ バックエンド（Cloud Functions Python）
+✅ データベース（Firestore asia-northeast2）
+✅ AI処理（Gemini 1.5 Flash）
+✅ 4キャラクター全員動作確認済み
+```
+
+### 8. 最終コミット＆プッシュ
+
+```bash
+cd ~/te-sou-itako/te-sou-itako
+git add -A
+git commit -m "feat: deploy to Firebase Hosting and Firestore production"
+git push origin main
+```
+
+---
+
+**🎉 手相イタコ占いアプリ、本番公開完了！**
+
+```
+本番URL：https://te-sou-itako-f7136.web.app/
+Cloud Functions：https://us-central1-te-sou-itako-f7136.cloudfunctions.net/analyzeHand
+```
 
 ---
 
@@ -874,6 +992,53 @@ curl -X POST <URL> -H "Content-Type: application/json" -d @request.json
 
 ---
 
+### iPhoneの高解像度画像でCloud Functionsが落ちる
+
+iPhoneで撮影した写真（10〜20MB）をそのまま送信すると以下のエラーが発生。
+
+```
+An internal server error occurred
+```
+
+**原因：**
+- Cloud FunctionsのデフォルトメモリはOOMエラーを起こす
+- Gemini APIのリクエストサイズ制限に到達
+
+**対処法：** PillowでCloud Functions側でリサイズ・圧縮する。
+
+```python
+# main.pyに画像リサイズ処理を追加
+import io
+from PIL import Image
+import base64
+
+# 仮のimageData（base64エンコードされた画像データ文字列）
+# 実際にはリクエストボディから取得します
+imageData_base64_string = "..." # ここにbase64エンコードされた画像データが入ると想定
+
+# 1. base64文字列をデコードしてバイナリデータにする
+decoded_image_data = base64.b64decode(imageData_base64_string)
+
+# 2. バイナリデータをio.BytesIOに通し、PIL.Imageで開く
+img = Image.open(io.BytesIO(decoded_image_data))
+
+# 3. 画像が大きすぎる場合はリサイズ
+max_dim = 1024
+if img.width > max_dim or img.height > max_dim:
+    img.thumbnail((max_dim, max_dim), Image.LANCZOS)
+
+# 4. リサイズ後の画像をio.BytesIOにJPEG形式で保存
+output_buffer = io.BytesIO()
+img.save(output_buffer, format="JPEG", quality=85) # JPEG形式で品質85で保存
+
+# 5. 処理済みの画像バイナリデータを取得
+processed_image_bytes = output_buffer.getvalue()
+
+# この processed_image_bytes をGemini APIに渡します
+```
+
+---
+
 ### 新SDK（google.genai）移行時の詰まりポイント
 
 **① Part のインポートエラー**
@@ -947,4 +1112,3 @@ Gemini APIにJSON出力を指示しても、レスポンスが ```` ```json ... 
 - [Firebase Console](https://console.firebase.google.com)
 - [Aider公式](https://aider.chat)
 - [Gemini API Docs](https://ai.google.dev/docs)
-- [RE:ARME Portfolio](https://rearme.vercel.app)

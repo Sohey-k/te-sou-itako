@@ -2,6 +2,8 @@ import os
 import json
 import base64
 import logging
+import io # 追加
+from PIL import Image # 追加
 
 from google import genai
 from google.genai import types
@@ -103,7 +105,7 @@ def analyzeHand(req: https_fn.Request) -> https_fn.Response:
         prompt_text = (
             f"{persona_description}\n"
             f"提供された手相画像を見て、その人の運命と人生の道について、{character}の視点から占いの結果を述べてください。\n"
-            "各フィールドは必ず140文字以内で簡潔にまとめてください。\n" # ここに新しい指示を追加
+            "各フィールドは必ず140文字以内で簡潔にまとめてください。\n"
             "以下のJSON形式で手相の分析とイタコによるメッセージを提供してください。JSON以外の余計なテキストは一切含めないでください。\n\n"
             "期待するJSON構造:\n"
             "```json\n"
@@ -123,6 +125,23 @@ def analyzeHand(req: https_fn.Request) -> https_fn.Response:
             "手相の分析は客観的に行い、イタコの結果は「{character}」の口調や視点に合わせてください。"
         )
 
+        # 画像処理ロジック
+        decoded_image_data = base64.b64decode(imageData)
+        image_stream = io.BytesIO(decoded_image_data)
+        img = Image.open(image_stream)
+
+        # 最大辺が1024pxになるようにリサイズ
+        max_size = 1024
+        if img.width > max_size or img.height > max_size:
+            logging.info(f"Resizing image from {img.width}x{img.height} to max {max_size}px.")
+            img.thumbnail((max_size, max_size), Image.LANCZOS) # LANCZOSは高品質なリサイズフィルター
+
+        # JPEG形式で圧縮し、BytesIOに保存
+        output_image_stream = io.BytesIO()
+        img.save(output_image_stream, format="JPEG", quality=85)
+        processed_image_bytes = output_image_stream.getvalue()
+        logging.info(f"Processed image size: {len(processed_image_bytes)} bytes")
+
         # Gemini APIの呼び出し (新しいSDK形式)
         response = client.models.generate_content(
             model='gemini-2.5-flash',
@@ -130,7 +149,7 @@ def analyzeHand(req: https_fn.Request) -> https_fn.Response:
                 types.Content(
                     parts=[
                         types.Part.from_bytes(
-                            data=base64.b64decode(imageData),
+                            data=processed_image_bytes, # 処理済みの画像データを渡す
                             mime_type='image/jpeg'
                         ),
                         types.Part.from_text(text=prompt_text) # text= を明示
