@@ -16,7 +16,8 @@ function App() {
   const [previewImageUrl, setPreviewImageUrl] = useState(null);
   const [selectedCharacter, setSelectedCharacter] = useState(null);
   const [readingId, setReadingId] = useState(null);
-  const [itakoResult, setItakoResult] = useState(null);
+  const [itakoResult, setItakoResult] = useState(null); // interpretation, advice, future
+  const [handAnalysis, setHandAnalysis] = useState(null); // lifeLine, headLine, heartLine
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
@@ -28,6 +29,7 @@ function App() {
     setSelectedCharacter(null);
     setReadingId(null);
     setItakoResult(null);
+    setHandAnalysis(null);
     setError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = ''; // ファイル選択をクリア
@@ -54,15 +56,69 @@ function App() {
     setScreen('loading');
     setError(null);
     setItakoResult(null);
+    setHandAnalysis(null);
 
     try {
-      // analyzeHandを呼び出し、画像ファイルとキャラクター名を渡す
-      const response = await analyzeHand(selectedImageFile, selectedCharacter.name);
+      let processedImageFile = selectedImageFile;
+
+      // 画像リサイズ処理
+      if (selectedImageFile) {
+        processedImageFile = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              const MAX_DIMENSION = 800; // 長辺の最大ピクセル数
+              let width = img.width;
+              let height = img.height;
+
+              // 長辺がMAX_DIMENSIONを超える場合のみリサイズ
+              if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+                if (width > height) {
+                  height *= MAX_DIMENSION / width;
+                  width = MAX_DIMENSION;
+                } else {
+                  width *= MAX_DIMENSION / height;
+                  height = MAX_DIMENSION;
+                }
+              }
+
+              const canvas = document.createElement('canvas');
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+
+              // JPEG形式、品質0.7でBlobを生成
+              canvas.toBlob((blob) => {
+                if (blob) {
+                  // BlobをFileオブジェクトに変換してresolve
+                  const resizedFile = new File([blob], selectedImageFile.name, {
+                    type: 'image/jpeg',
+                    lastModified: Date.now()
+                  });
+                  resolve(resizedFile);
+                } else {
+                  reject(new Error('Failed to create blob from canvas.'));
+                }
+              }, 'image/jpeg', 0.7); // MIMEタイプと品質を指定
+            };
+            img.onerror = (error) => reject(error);
+            img.src = e.target.result;
+          };
+          reader.onerror = (error) => reject(error);
+          reader.readAsDataURL(selectedImageFile);
+        });
+      }
+
+      // analyzeHandを呼び出し、軽量化した画像データを渡す
+      const response = await analyzeHand(processedImageFile, selectedCharacter.name);
       if (!response.success) {
         throw new Error('手相分析とイタコリーディングに失敗しました。');
       }
       setReadingId(response.readingId);
-      setItakoResult(response.result.itakoResult); // レスポンスから直接itakoResultを取得
+      setItakoResult(response.result.itakoResult);
+      setHandAnalysis(response.result.analysisResult);
       setScreen('result');
     } catch (err) {
       console.error('占い処理中にエラーが発生しました:', err);
@@ -203,7 +259,7 @@ function App() {
                 {/* 右側のイタコ神託タイムラインカード */}
                 <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl">
                   <h3 className="text-xl font-bold text-slate-100 mb-4">イタコの神託</h3>
-                  {itakoResult && (
+                  {(handAnalysis || itakoResult) && (
                     <div className="space-y-6">
                       {/* タイムラインヘッダー */}
                       <div className="flex items-start space-x-4">
@@ -223,24 +279,86 @@ function App() {
 
                       {/* タイムラインコンテンツ */}
                       <div className="space-y-4 border-l-2 border-slate-700 pl-4 ml-6">
-                        <div className="relative">
-                          <div className="absolute -left-7 top-0 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900"></div>
-                          <p className="text-slate-200">
-                            <strong className="text-purple-300">解釈:</strong> {itakoResult.interpretation}
-                          </p>
-                        </div>
-                        <div className="relative">
-                          <div className="absolute -left-7 top-0 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900"></div>
-                          <p className="text-slate-200">
-                            <strong className="text-purple-300">アドバイス:</strong> {itakoResult.advice}
-                          </p>
-                        </div>
-                        <div className="relative">
-                          <div className="absolute -left-7 top-0 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900"></div>
-                          <p className="text-slate-200">
-                            <strong className="text-purple-300">未来:</strong> {itakoResult.future}
-                          </p>
-                        </div>
+                        {/* ポスト1（生命線） */}
+                        {handAnalysis?.lifeLine && (
+                          <div className="relative">
+                            <div className="absolute -left-7 top-0 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900"></div>
+                            <p className="text-slate-200">
+                              <strong className="text-purple-300">生命線:</strong>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500 text-white ml-2">
+                                長さ: {handAnalysis.lifeLine.length}
+                              </span>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500 text-white ml-2">
+                                深さ: {handAnalysis.lifeLine.depth}
+                              </span>
+                              <br />
+                              {handAnalysis.lifeLine.description}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* ポスト2（知能線） */}
+                        {handAnalysis?.headLine && (
+                          <div className="relative">
+                            <div className="absolute -left-7 top-0 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900"></div>
+                            <p className="text-slate-200">
+                              <strong className="text-purple-300">知能線:</strong>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500 text-white ml-2">
+                                長さ: {handAnalysis.headLine.length}
+                              </span>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500 text-white ml-2">
+                                タイプ: {handAnalysis.headLine.type}
+                              </span>
+                              <br />
+                              {handAnalysis.headLine.description}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* ポスト3（感情線） */}
+                        {handAnalysis?.heartLine && (
+                          <div className="relative">
+                            <div className="absolute -left-7 top-0 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900"></div>
+                            <p className="text-slate-200">
+                              <strong className="text-purple-300">感情線:</strong>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500 text-white ml-2">
+                                長さ: {handAnalysis.heartLine.length}
+                              </span>
+                              <br />
+                              {handAnalysis.heartLine.description}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* ポスト4（イタコ解釈） */}
+                        {itakoResult?.interpretation && (
+                          <div className="relative">
+                            <div className="absolute -left-7 top-0 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900"></div>
+                            <p className="text-slate-200">
+                              <strong className="text-purple-300">解釈 ({selectedCharacter?.name}):</strong> {itakoResult.interpretation}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* ポスト5（アドバイス） */}
+                        {itakoResult?.advice && (
+                          <div className="relative">
+                            <div className="absolute -left-7 top-0 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900"></div>
+                            <p className="text-slate-200">
+                              <strong className="text-purple-300">アドバイス ({selectedCharacter?.name}):</strong> {itakoResult.advice}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* ポスト6（未来の展望） */}
+                        {itakoResult?.future && (
+                          <div className="relative">
+                            <div className="absolute -left-7 top-0 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900"></div>
+                            <p className="text-slate-200">
+                              <strong className="text-purple-300">未来 ({selectedCharacter?.name}):</strong> {itakoResult.future}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
