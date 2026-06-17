@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { analyzeHand } from './api'; // getItakoReadingを削除
-import './App.css'; // App.cssをインポート
+import React, { useState, useRef } from 'react';
+import { analyzeHand } from './api';
+import './App.css'; // Tailwind CSSのベーススタイルやカスタムCSSのために残します
 
 // キャラクターデータ
 const characters = [
@@ -76,17 +76,20 @@ function App() {
     switch (screen) {
       case 'top':
         return (
-          <div style={styles.container}>
-            <h1 style={styles.title}>手相イタコ占い</h1>
-            <p style={styles.description}>あなたの手相をイタコが読み解きます。</p>
+          <div className="flex flex-col items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl shadow-lg max-w-md w-full text-center">
+            <h1 className="text-4xl font-extrabold text-slate-100 mb-4">手相イタコ占い</h1>
+            <p className="text-lg text-slate-300 mb-8">あなたの手相をイタコが読み解きます。</p>
             <input
               type="file"
               accept="image/*"
               onChange={handleImageChange}
               ref={fileInputRef}
-              style={styles.fileInput}
+              className="hidden"
             />
-            <button onClick={() => fileInputRef.current.click()} style={styles.button}>
+            <button
+              onClick={() => fileInputRef.current.click()}
+              className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 w-full max-w-xs"
+            >
               手相画像をアップロードする
             </button>
           </div>
@@ -94,16 +97,22 @@ function App() {
 
       case 'preview':
         return (
-          <div style={styles.container}>
-            <h2 style={styles.subtitle}>選択した画像</h2>
+          <div className="flex flex-col items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl shadow-lg max-w-md w-full text-center">
+            <h2 className="text-3xl font-bold text-slate-100 mb-6">選択した画像</h2>
             {previewImageUrl && (
-              <img src={previewImageUrl} alt="Preview" style={styles.previewImage} />
+              <img src={previewImageUrl} alt="Preview" className="max-w-full max-h-80 object-contain rounded-lg border border-slate-700 mb-6" />
             )}
-            <div style={styles.buttonGroup}>
-              <button onClick={() => setScreen('character')} style={styles.button}>
+            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-xs">
+              <button
+                onClick={() => setScreen('character')}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 flex-grow"
+              >
                 この画像で占う
               </button>
-              <button onClick={resetState} style={{ ...styles.button, ...styles.secondaryButton }}>
+              <button
+                onClick={resetState}
+                className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 flex-grow"
+              >
                 撮り直す
               </button>
             </div>
@@ -112,77 +121,135 @@ function App() {
 
       case 'character':
         return (
-          <div style={styles.container}>
-            <h2 style={styles.subtitle}>イタコを選ぶ</h2>
-            <div style={styles.characterGrid}>
+          <div className="flex flex-col items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl shadow-lg max-w-2xl w-full text-center">
+            <h2 className="text-3xl font-bold text-slate-100 mb-6">イタコを選ぶ</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-full">
               {characters.map((char) => (
                 <div
                   key={char.id}
-                  style={{
-                    ...styles.characterCard,
-                    ...(selectedCharacter?.id === char.id ? styles.selectedCard : {}),
-                  }}
+                  className={`p-4 rounded-xl cursor-pointer transition-all duration-300
+                    ${selectedCharacter?.id === char.id
+                      ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_15px_rgba(168,85,247,0.4)]'
+                      : 'border border-slate-700 bg-slate-800 hover:border-purple-600 hover:bg-slate-700'
+                    }`}
                   onClick={() => setSelectedCharacter(char)}
                 >
-                  <h3>{char.name}</h3>
-                  <p>{char.description}</p>
+                  <h3 className="text-xl font-semibold text-slate-100 mb-1">{char.name}</h3>
+                  <p className="text-sm text-slate-400">{char.description}</p>
                 </div>
               ))}
             </div>
             {selectedCharacter && (
-              <p style={styles.selectionText}>選択中: {selectedCharacter.name}</p>
+              <p className="text-lg text-slate-200 mb-6">選択中: <span className="font-semibold text-purple-400">{selectedCharacter.name}</span></p>
             )}
-            <div style={styles.buttonGroup}>
+            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
               <button
                 onClick={handleFortuneTelling}
                 disabled={!selectedCharacter}
-                style={styles.button}
+                className={`bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 flex-grow
+                  ${!selectedCharacter ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 占ってもらう
               </button>
-              <button onClick={() => setScreen('preview')} style={{ ...styles.button, ...styles.secondaryButton }}>
+              <button
+                onClick={() => setScreen('preview')}
+                className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 flex-grow"
+              >
                 戻る
               </button>
             </div>
-            {error && <p style={styles.errorText}>{error}</p>}
+            {error && <p className="text-red-500 mt-4 font-bold">{error}</p>}
           </div>
         );
 
       case 'loading':
         return (
-          <div style={styles.container}>
-            <h2 style={styles.subtitle}>解析中...</h2>
-            {/* className="spinner" を追加し、アニメーションはApp.cssで管理 */}
-            <div className="spinner" style={styles.spinnerBase}></div>
-            <p>イタコがあなたの手相を読み解いています。</p>
+          <div className="flex flex-col items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl shadow-lg max-w-md w-full text-center">
+            <h2 className="text-3xl font-bold text-slate-100 mb-8">解析中...</h2>
+            <div className="space-y-4 w-full max-w-xs">
+              <div className="h-6 bg-slate-700 rounded w-3/4 animate-pulse"></div>
+              <div className="h-4 bg-slate-700 rounded w-full animate-pulse"></div>
+              <div className="h-4 bg-slate-700 rounded w-5/6 animate-pulse"></div>
+              <div className="h-4 bg-slate-700 rounded w-1/2 animate-pulse"></div>
+              <div className="h-6 bg-slate-700 rounded w-2/3 animate-pulse mt-8"></div>
+              <div className="h-4 bg-slate-700 rounded w-full animate-pulse"></div>
+              <div className="h-4 bg-slate-700 rounded w-4/5 animate-pulse"></div>
+            </div>
+            <p className="text-slate-300 mt-8">イタコがあなたの手相を読み解いています。</p>
           </div>
         );
 
       case 'result':
         return (
-          <div style={styles.container}>
-            <h2 style={styles.subtitle}>占い結果</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl shadow-lg max-w-4xl w-full">
             {error ? (
-              <p style={styles.errorText}>エラー: {error}</p>
+              <div className="md:col-span-2 text-center">
+                <h2 className="text-3xl font-bold text-red-500 mb-4">エラー</h2>
+                <p className="text-red-400">{error}</p>
+                <button onClick={resetState} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 mt-8">
+                  もう一度占う
+                </button>
+              </div>
             ) : (
-              itakoResult && (
-                <div style={styles.resultContent}>
-                  <h3 style={styles.characterName}>イタコ: {selectedCharacter?.name}</h3>
-                  <p style={styles.resultSection}>
-                    <strong>解釈:</strong> {itakoResult.interpretation}
-                  </p>
-                  <p style={styles.resultSection}>
-                    <strong>アドバイス:</strong> {itakoResult.advice}
-                  </p>
-                  <p style={styles.resultSection}>
-                    <strong>未来:</strong> {itakoResult.future}
-                  </p>
+              <>
+                {/* 左側の画像カード */}
+                <div className="flex flex-col items-center justify-center p-4 bg-slate-900/60 border border-slate-800 rounded-xl">
+                  <h3 className="text-xl font-bold text-slate-100 mb-4">あなたの手相</h3>
+                  {previewImageUrl && (
+                    <img src={previewImageUrl} alt="Your Hand" className="max-w-full max-h-96 object-contain rounded-lg border border-slate-700" />
+                  )}
                 </div>
-              )
+
+                {/* 右側のイタコ神託タイムラインカード */}
+                <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl">
+                  <h3 className="text-xl font-bold text-slate-100 mb-4">イタコの神託</h3>
+                  {itakoResult && (
+                    <div className="space-y-6">
+                      {/* タイムラインヘッダー */}
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold text-xl">
+                          {selectedCharacter?.name[0]}
+                        </div>
+                        <div className="flex-grow">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-bold text-slate-100 text-lg">{selectedCharacter?.name}</span>
+                            <span className="text-slate-400 text-sm">@{selectedCharacter?.id}</span>
+                          </div>
+                          <p className="text-slate-300 text-sm mt-1">
+                            {selectedCharacter?.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* タイムラインコンテンツ */}
+                      <div className="space-y-4 border-l-2 border-slate-700 pl-4 ml-6">
+                        <div className="relative">
+                          <div className="absolute -left-7 top-0 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900"></div>
+                          <p className="text-slate-200">
+                            <strong className="text-purple-300">解釈:</strong> {itakoResult.interpretation}
+                          </p>
+                        </div>
+                        <div className="relative">
+                          <div className="absolute -left-7 top-0 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900"></div>
+                          <p className="text-slate-200">
+                            <strong className="text-purple-300">アドバイス:</strong> {itakoResult.advice}
+                          </p>
+                        </div>
+                        <div className="relative">
+                          <div className="absolute -left-7 top-0 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900"></div>
+                          <p className="text-slate-200">
+                            <strong className="text-purple-300">未来:</strong> {itakoResult.future}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <button onClick={resetState} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 mt-8 w-full">
+                    もう一度占う
+                  </button>
+                </div>
+              </>
             )}
-            <button onClick={resetState} style={styles.button}>
-              もう一度占う
-            </button>
           </div>
         );
 
@@ -192,150 +259,10 @@ function App() {
   };
 
   return (
-    <div style={styles.appContainer}>
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 flex items-center justify-center font-sans">
       {renderScreen()}
     </div>
   );
 }
-
-// シンプルなインラインスタイル
-const styles = {
-  appContainer: {
-    fontFamily: 'Arial, sans-serif',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: '100vh',
-    backgroundColor: '#f0f2f5',
-    padding: '20px',
-    boxSizing: 'border-box',
-  },
-  container: {
-    backgroundColor: '#fff',
-    padding: '30px',
-    borderRadius: '10px',
-    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
-    textAlign: 'center',
-    maxWidth: '500px',
-    width: '100%',
-  },
-  title: {
-    color: '#333',
-    fontSize: '2.5em',
-    marginBottom: '15px',
-  },
-  subtitle: {
-    color: '#555',
-    fontSize: '1.8em',
-    marginBottom: '20px',
-  },
-  description: {
-    color: '#666',
-    fontSize: '1.1em',
-    marginBottom: '30px',
-  },
-  fileInput: {
-    display: 'none', // ファイル選択ボタンを非表示にし、カスタムボタンでトリガー
-  },
-  button: {
-    backgroundColor: '#4CAF50',
-    color: 'white',
-    padding: '12px 25px',
-    border: 'none',
-    borderRadius: '5px',
-    fontSize: '1.1em',
-    cursor: 'pointer',
-    marginTop: '20px',
-    transition: 'background-color 0.3s ease',
-    width: '100%',
-    maxWidth: '300px',
-    boxSizing: 'border-box',
-  },
-  buttonHover: {
-    backgroundColor: '#45a049',
-  },
-  secondaryButton: {
-    backgroundColor: '#f44336',
-    marginLeft: '10px',
-  },
-  previewImage: {
-    maxWidth: '100%',
-    maxHeight: '300px',
-    objectFit: 'contain',
-    borderRadius: '8px',
-    marginBottom: '20px',
-    border: '1px solid #ddd',
-  },
-  buttonGroup: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '10px',
-    marginTop: '20px',
-    flexWrap: 'wrap',
-  },
-  characterGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-    gap: '15px',
-    marginBottom: '20px',
-  },
-  characterCard: {
-    border: '2px solid #eee',
-    borderRadius: '8px',
-    padding: '15px',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    backgroundColor: '#f9f9f9',
-  },
-  characterCardHover: {
-    borderColor: '#4CAF50',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-  },
-  selectedCard: {
-    borderColor: '#4CAF50',
-    backgroundColor: '#e6ffe6',
-    boxShadow: '0 4px 10px rgba(76, 175, 80, 0.2)',
-  },
-  selectionText: {
-    fontSize: '1.1em',
-    color: '#333',
-    marginTop: '10px',
-  },
-  spinnerBase: { // スピナーの基本スタイルをインラインで定義
-    border: '4px solid rgba(0, 0, 0, .1)',
-    borderLeftColor: '#4CAF50',
-    borderRadius: '50%',
-    width: '40px',
-    height: '40px',
-    margin: '30px auto',
-    // animationプロパティはApp.cssに移動
-  },
-  resultContent: {
-    textAlign: 'left',
-    backgroundColor: '#f9f9f9',
-    padding: '20px',
-    borderRadius: '8px',
-    marginBottom: '20px',
-    border: '1px solid #eee',
-  },
-  characterName: {
-    fontSize: '1.5em',
-    color: '#333',
-    marginBottom: '15px',
-    borderBottom: '1px solid #eee',
-    paddingBottom: '10px',
-  },
-  resultSection: {
-    fontSize: '1.1em',
-    color: '#444',
-    lineHeight: '1.6',
-    marginBottom: '10px',
-  },
-  errorText: {
-    color: '#f44336',
-    marginTop: '20px',
-    fontWeight: 'bold',
-  },
-};
 
 export default App;
