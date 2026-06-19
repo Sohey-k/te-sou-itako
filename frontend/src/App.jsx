@@ -228,7 +228,7 @@ function App() {
       {/* 🔮 GIMPで作成した最強の透過GIFをここに配置！ */}
       <div className="w-40 h-40 mb-6 overflow-hidden flex items-center justify-center bg-slate-950/40 border border-slate-800 rounded-xl shadow-inner">
         <img 
-          src="./assets/itako_loading.gif" 
+          src="./assets/itako.gif" 
           alt="イタコお祓い中" 
           className="w-32 h-32 object-contain pixelated" // ドット絵をクッキリさせる魔法のクラス
         />
