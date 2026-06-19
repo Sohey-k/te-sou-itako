@@ -220,20 +220,31 @@ function App() {
 
       case 'loading':
         return (
-          <div className="flex flex-col items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl shadow-lg max-w-md w-full text-center">
-            <h2 className="text-3xl font-bold text-slate-100 mb-8">解析中...</h2>
-            <div className="space-y-4 w-full max-w-xs">
-              <div className="h-6 bg-slate-700 rounded w-3/4 animate-pulse"></div>
-              <div className="h-4 bg-slate-700 rounded w-full animate-pulse"></div>
-              <div className="h-4 bg-slate-700 rounded w-5/6 animate-pulse"></div>
-              <div className="h-4 bg-slate-700 rounded w-1/2 animate-pulse"></div>
-              <div className="h-6 bg-slate-700 rounded w-2/3 animate-pulse mt-8"></div>
-              <div className="h-4 bg-slate-700 rounded w-full animate-pulse"></div>
-              <div className="h-4 bg-slate-700 rounded w-4/5 animate-pulse"></div>
-            </div>
-            <p className="text-slate-300 mt-8">イタコがあなたの手相を読み解いています。</p>
-          </div>
-        );
+    <div className="flex flex-col items-center justify-center p-8 bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-2xl shadow-lg max-w-md w-full text-center">
+      <h2 className="text-3xl font-bold text-slate-100 mb-6 font-mono tracking-wider animate-pulse">
+        ✦ 神託降臨中 ✦
+      </h2>
+      
+      {/* 🔮 GIMPで作成した最強の透過GIFをここに配置！ */}
+      <div className="w-40 h-40 mb-6 overflow-hidden flex items-center justify-center bg-slate-950/40 border border-slate-800 rounded-xl shadow-inner">
+        <img 
+          src="./assets/itako_loading.gif" 
+          alt="イタコお祓い中" 
+          className="w-32 h-32 object-contain pixelated" // ドット絵をクッキリさせる魔法のクラス
+        />
+      </div>
+
+      {/* レトロゲーム風のテキスト演出 */}
+      <div className="space-y-2 font-mono text-sm">
+        <p className="text-purple-400">ITAKO IS COMMUNICATING WITH GEMINI...</p>
+        <p className="text-slate-400 text-xs animate-bounce">しばらくお待ちください</p>
+      </div>
+      
+      <p className="text-slate-300 mt-6 border-t border-slate-800/60 pt-4 w-full">
+        烏帽子を正したイタコが、あなたから送られた手相のログを読み解いています。
+      </p>
+    </div>
+  );
 
       case 'result':
         return (
