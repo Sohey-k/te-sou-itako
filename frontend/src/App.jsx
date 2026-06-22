@@ -133,8 +133,8 @@ function App() {
       case 'top':
         return (
           <div className="flex flex-col items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl shadow-lg max-w-md w-full text-center">
-            <h1 className="text-4xl font-extrabold text-slate-100 mb-4">手相イタコ占い</h1>
-            <p className="text-lg text-slate-300 mb-8">あなたの手相をイタコが読み解きます。</p>
+            <h1 className="text-4xl font-extrabold text-slate-100 mb-4">手相AIイタコ占い</h1>
+            <p className="text-lg text-slate-300 mb-8">あなたの手相をAIイタコが読み解きます。</p>
             <input
               type="file"
               accept="image/*"
