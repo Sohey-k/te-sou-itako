@@ -241,7 +241,7 @@ function App() {
       </div>
       
       <p className="text-slate-300 mt-6 border-t border-slate-800/60 pt-4 w-full">
-        烏帽子を正したイタコが、あなたから送られた手相のログを読み解いています。
+        イタコが、あなたから送られた手相のログを読み解いています。
       </p>
     </div>
   );

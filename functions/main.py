@@ -2,13 +2,16 @@ import os
 import json
 import base64
 import logging
-import io # 追加
-from PIL import Image # 追加
+import io
+from PIL import Image
+
+# 💡 1行追記：dotenvからロード用の関数をインポート
+from dotenv import load_dotenv
 
 from google import genai
 from google.genai import types
 from firebase_functions import https_fn
-from firebase_admin import initialize_app, firestore # firestoreをfirebase_adminからインポート
+from firebase_admin import initialize_app, firestore
 
 # Firebase Admin SDKの初期化
 initialize_app()
@@ -18,6 +21,9 @@ db = firestore.client()
 
 # ロギングの設定
 logging.basicConfig(level=logging.INFO)
+
+# 💡 2行追記：ここで直下の .env ファイルの中身を os.environ に自動注入する
+load_dotenv()
 
 # Gemini APIキーの取得
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
@@ -103,6 +109,10 @@ def analyzeHand(req: https_fn.Request) -> https_fn.Response:
 
         # Gemini APIへのプロンプトテキスト
         prompt_text = (
+            f"まず最初に、画像に人間の手のひらが明確に写っているか判定してください。\n"
+            f"手のひらが写っていない、または不明瞭な場合は、\n"
+            f"analysisResultとitakoResultの代わりに以下の形式のみを返してください。\n"
+            f"{{\"error\": \"手のひらの画像が検出できませんでした。手のひら全体が写るように撮影し直してください。\"}}\n\n"
             f"{persona_description}\n"
             f"提供された手相画像を見て、その人の運命と人生の道について、{character}の視点から占いの結果を述べてください。\n"
             "各フィールドは必ず140文字以内で簡潔にまとめてください。\n"
@@ -168,6 +178,14 @@ def analyzeHand(req: https_fn.Request) -> https_fn.Response:
         # JSON文字列をパース
         gemini_result = json.loads(raw_gemini_output)
 
+        # Geminiからのレスポンスにエラーが含まれる場合の処理
+        if 'error' in gemini_result:
+            logging.warning(f"Gemini detected an image error: {gemini_result['error']}")
+            return https_fn.Response(json.dumps({
+                "success": False,
+                "error": gemini_result['error']
+            }), status=400, headers={"Content-Type": "application/json", **cors_headers})
+
         # Firestoreに結果を保存
         new_reading_ref.set({
             'timestamp': firestore.SERVER_TIMESTAMP,
@@ -207,5 +225,3 @@ def analyzeHand(req: https_fn.Request) -> https_fn.Response:
             mimetype='application/json',
             headers=cors_headers
         )
-
-# getItakoReading 関数は削除されました
