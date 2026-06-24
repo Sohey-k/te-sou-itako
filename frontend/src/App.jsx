@@ -132,9 +132,14 @@ function App() {
     switch (screen) {
       case 'top':
         return (
-          <div className="flex flex-col items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl shadow-lg max-w-md w-full text-center">
-            <h1 className="text-4xl font-extrabold text-slate-100 mb-4">手相AIイタコ占い</h1>
-            <p className="text-lg text-slate-300 mb-8">あなたの手相をAIイタコが読み解きます。</p>
+          <div className="flex flex-col items-center justify-center p-6 bg-[var(--retro-card-bg)] border-2 border-[var(--retro-border)] rounded-none shadow-none max-w-md w-full text-center">
+            <h1 className="text-4xl font-['Press_Start_2P'] text-[var(--retro-text)] mb-4">PALM AI ITAKO</h1>
+            <img 
+              src="/assets/title.gif" 
+              alt="PALM AI ITAKO Title" 
+              style={{ width: '350px', margin: '0', display: 'block' }} 
+            />
+            <p className="text-lg text-[var(--retro-text)] mb-8">あなたの手相をAIイタコが読み解きます。</p>
             <input
               type="file"
               accept="image/*"
@@ -144,7 +149,7 @@ function App() {
             />
             <button
               onClick={() => fileInputRef.current.click()}
-              className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 w-full max-w-xs"
+              className="bg-[var(--retro-main)] hover:bg-[var(--retro-button-hover)] text-[var(--retro-text)] font-bold py-3 px-6 rounded-none transition-colors duration-100 w-full max-w-xs border-2 border-[var(--retro-border)]"
             >
               手相画像をアップロードする
             </button>
@@ -153,21 +158,21 @@ function App() {
 
       case 'preview':
         return (
-          <div className="flex flex-col items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl shadow-lg max-w-md w-full text-center">
-            <h2 className="text-3xl font-bold text-slate-100 mb-6">選択した画像</h2>
+          <div className="flex flex-col items-center justify-center p-6 bg-[var(--retro-card-bg)] border-2 border-[var(--retro-border)] rounded-none shadow-none max-w-md w-full text-center">
+            <h2 className="text-3xl font-['Press_Start_2P'] text-[var(--retro-text)] mb-6">選択した画像</h2>
             {previewImageUrl && (
-              <img src={previewImageUrl} alt="Preview" className="max-w-full max-h-80 object-contain rounded-lg border border-slate-700 mb-6" />
+              <img src={previewImageUrl} alt="Preview" className="max-w-full max-h-80 object-contain rounded-none border-2 border-[var(--retro-border)] mb-6" />
             )}
             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-xs">
               <button
                 onClick={() => setScreen('character')}
-                className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 flex-grow"
+                className="bg-[var(--retro-main)] hover:bg-[var(--retro-button-hover)] text-[var(--retro-text)] font-bold py-3 px-6 rounded-none transition-colors duration-100 flex-grow border-2 border-[var(--retro-border)]"
               >
                 この画像で占う
               </button>
               <button
                 onClick={resetState}
-                className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 flex-grow"
+                className="bg-gray-700 hover:bg-gray-800 text-[var(--retro-text)] font-bold py-3 px-6 rounded-none transition-colors duration-100 flex-grow border-2 border-[var(--retro-border)]"
               >
                 撮り直す
               </button>
@@ -177,39 +182,39 @@ function App() {
 
       case 'character':
         return (
-          <div className="flex flex-col items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl shadow-lg max-w-2xl w-full text-center">
-            <h2 className="text-3xl font-bold text-slate-100 mb-6">イタコを選ぶ</h2>
+          <div className="flex flex-col items-center justify-center p-6 bg-[var(--retro-card-bg)] border-2 border-[var(--retro-border)] rounded-none shadow-none max-w-2xl w-full text-center">
+            <h2 className="text-3xl font-['Press_Start_2P'] text-[var(--retro-text)] mb-6">イタコを選ぶ</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-full">
               {characters.map((char) => (
                 <div
                   key={char.id}
-                  className={`p-4 rounded-xl cursor-pointer transition-all duration-300
+                  className={`p-4 rounded-none cursor-pointer transition-all duration-100 border-2
                     ${selectedCharacter?.id === char.id
-                      ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_15px_rgba(168,85,247,0.4)]'
-                      : 'border border-slate-700 bg-slate-800 hover:border-purple-600 hover:bg-slate-700'
+                      ? 'border-[var(--retro-accent)] bg-[var(--retro-accent)]/20 shadow-none'
+                      : 'border-[var(--retro-border)] bg-[var(--retro-card-bg)] hover:border-[var(--retro-main)] hover:bg-[var(--retro-card-bg)]'
                     }`}
                   onClick={() => setSelectedCharacter(char)}
                 >
-                  <h3 className="text-xl font-semibold text-slate-100 mb-1">{char.name}</h3>
-                  <p className="text-sm text-slate-400">{char.description}</p>
+                  <h3 className="text-xl font-semibold text-[var(--retro-text)] mb-1">{char.name}</h3>
+                  <p className="text-sm text-gray-300">{char.description}</p>
                 </div>
               ))}
             </div>
             {selectedCharacter && (
-              <p className="text-lg text-slate-200 mb-6">選択中: <span className="font-semibold text-purple-400">{selectedCharacter.name}</span></p>
+              <p className="text-lg text-[var(--retro-text)] mb-6">選択中: <span className="font-semibold text-[var(--retro-accent)]">{selectedCharacter.name}</span></p>
             )}
             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
               <button
                 onClick={handleFortuneTelling}
                 disabled={!selectedCharacter}
-                className={`bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 flex-grow
+                className={`bg-[var(--retro-main)] hover:bg-[var(--retro-button-hover)] text-[var(--retro-text)] font-bold py-3 px-6 rounded-none transition-colors duration-100 flex-grow border-2 border-[var(--retro-border)]
                   ${!selectedCharacter ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 占ってもらう
               </button>
               <button
                 onClick={() => setScreen('preview')}
-                className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 flex-grow"
+                className="bg-gray-700 hover:bg-gray-800 text-[var(--retro-text)] font-bold py-3 px-6 rounded-none transition-colors duration-100 flex-grow border-2 border-[var(--retro-border)]"
               >
                 戻る
               </button>
@@ -220,13 +225,13 @@ function App() {
 
       case 'loading':
         return (
-    <div className="flex flex-col items-center justify-center p-8 bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-2xl shadow-lg max-w-md w-full text-center">
-      <h2 className="text-3xl font-bold text-slate-100 mb-6 font-mono tracking-wider animate-pulse">
+    <div className="flex flex-col items-center justify-center p-8 bg-[var(--retro-card-bg)] border-2 border-[var(--retro-border)] rounded-none shadow-none max-w-md w-full text-center">
+      <h2 className="text-3xl font-['Press_Start_2P'] text-[var(--retro-accent)] mb-6 tracking-wider animate-pulse">
         ✦ 神託降臨中 ✦
       </h2>
       
       {/* 🔮 GIMPで作成した最強の透過GIFをここに配置！ */}
-      <div className="w-40 h-40 mb-6 overflow-hidden flex items-center justify-center bg-slate-950/40 border border-slate-800 rounded-xl shadow-inner">
+      <div className="w-40 h-40 mb-6 overflow-hidden flex items-center justify-center bg-[var(--retro-bg)] border-2 border-[var(--retro-border)] rounded-none shadow-inner">
         <img 
           src="/assets/itako.gif" 
           alt="イタコお祓い中" 
@@ -235,12 +240,12 @@ function App() {
       </div>
 
       {/* レトロゲーム風のテキスト演出 */}
-      <div className="space-y-2 font-mono text-sm">
-        <p className="text-purple-400">ITAKO IS COMMUNICATING WITH GEMINI...</p>
-        <p className="text-slate-400 text-xs animate-bounce">しばらくお待ちください</p>
+      <div className="space-y-2 font-['Press_Start_2P'] text-sm">
+        <p className="text-[var(--retro-accent)]">ITAKO IS COMMUNICATING WITH GEMINI...</p>
+        <p className="text-gray-300 text-xs animate-bounce">しばらくお待ちください</p>
       </div>
       
-      <p className="text-slate-300 mt-6 border-t border-slate-800/60 pt-4 w-full">
+      <p className="text-[var(--retro-text)] mt-6 border-t-2 border-[var(--retro-border)] pt-4 w-full">
         イタコが、あなたから送られた手相のログを読み解いています。
       </p>
     </div>
@@ -248,58 +253,58 @@ function App() {
 
       case 'result':
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl shadow-lg max-w-4xl w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-[var(--retro-card-bg)] border-2 border-[var(--retro-border)] rounded-none shadow-none max-w-4xl w-full">
             {error ? (
               <div className="md:col-span-2 text-center">
-                <h2 className="text-3xl font-bold text-red-500 mb-4">エラー</h2>
-                <p className="text-red-400">{error}</p>
-                <button onClick={resetState} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 mt-8">
+                <h2 className="text-3xl font-['Press_Start_2P'] text-red-500 mb-4">エラー</h2>
+                <p className="text-red-400 text-[var(--retro-text)]">{error}</p>
+                <button onClick={resetState} className="bg-[var(--retro-main)] hover:bg-[var(--retro-button-hover)] text-[var(--retro-text)] font-bold py-3 px-6 rounded-none transition-colors duration-100 mt-8 border-2 border-[var(--retro-border)]">
                   もう一度占う
                 </button>
               </div>
             ) : (
               <>
                 {/* 左側の画像カード */}
-                <div className="flex flex-col items-center justify-center p-4 bg-slate-900/60 border border-slate-800 rounded-xl">
-                  <h3 className="text-xl font-bold text-slate-100 mb-4">あなたの手相</h3>
+                <div className="flex flex-col items-center justify-center p-4 bg-[var(--retro-card-bg)] border-2 border-[var(--retro-border)] rounded-none">
+                  <h3 className="text-xl font-bold text-[var(--retro-text)] mb-4">あなたの手相</h3>
                   {previewImageUrl && (
-                    <img src={previewImageUrl} alt="Your Hand" className="max-w-full max-h-96 object-contain rounded-lg border border-slate-700" />
+                    <img src={previewImageUrl} alt="Your Hand" className="max-w-full max-h-96 object-contain rounded-none border-2 border-[var(--retro-border)]" />
                   )}
                 </div>
 
                 {/* 右側のイタコ神託タイムラインカード */}
-                <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl">
-                  <h3 className="text-xl font-bold text-slate-100 mb-4">イタコの神託</h3>
+                <div className="p-4 bg-[var(--retro-card-bg)] border-2 border-[var(--retro-border)] rounded-none">
+                  <h3 className="text-xl font-bold text-[var(--retro-text)] mb-4">イタコの神託</h3>
                   {(handAnalysis || itakoResult) && (
                     <div className="space-y-6">
                       {/* タイムラインヘッダー */}
                       <div className="flex items-start space-x-4">
-                        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold text-xl">
+                        <div className="flex-shrink-0 w-12 h-12 rounded-none bg-[var(--retro-main)] flex items-center justify-center text-[var(--retro-text)] font-bold text-xl border-2 border-[var(--retro-border)]">
                           {selectedCharacter?.name[0]}
                         </div>
                         <div className="flex-grow">
                           <div className="flex items-center space-x-2">
-                            <span className="font-bold text-slate-100 text-lg">{selectedCharacter?.name}</span>
-                            <span className="text-slate-400 text-sm">@{selectedCharacter?.id}</span>
+                            <span className="font-bold text-[var(--retro-text)] text-lg">{selectedCharacter?.name}</span>
+                            <span className="text-gray-300 text-sm">@{selectedCharacter?.id}</span>
                           </div>
-                          <p className="text-slate-300 text-sm mt-1">
+                          <p className="text-gray-300 text-sm mt-1">
                             {selectedCharacter?.description}
                           </p>
                         </div>
                       </div>
 
                       {/* タイムラインコンテンツ */}
-                      <div className="space-y-4 border-l-2 border-slate-700 pl-4 ml-6">
+                      <div className="space-y-4 border-l-2 border-[var(--retro-border)] pl-4 ml-6">
                         {/* ポスト1（生命線） */}
                         {handAnalysis?.lifeLine && (
                           <div className="relative">
-                            <div className="absolute -left-7 top-0 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900"></div>
-                            <p className="text-slate-200">
-                              <strong className="text-purple-300">生命線:</strong>
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500 text-white ml-2">
+                            <div className="absolute -left-7 top-0 w-4 h-4 rounded-none bg-[var(--retro-accent)] border-2 border-[var(--retro-bg)]"></div>
+                            <p className="text-[var(--retro-text)]">
+                              <strong className="text-[var(--retro-main)]">生命線:</strong>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-none text-xs font-medium bg-blue-700 text-white ml-2 border border-blue-500">
                                 長さ: {handAnalysis.lifeLine.length}
                               </span>
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500 text-white ml-2">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-none text-xs font-medium bg-green-700 text-white ml-2 border border-green-500">
                                 深さ: {handAnalysis.lifeLine.depth}
                               </span>
                               <br />
@@ -311,13 +316,13 @@ function App() {
                         {/* ポスト2（知能線） */}
                         {handAnalysis?.headLine && (
                           <div className="relative">
-                            <div className="absolute -left-7 top-0 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900"></div>
-                            <p className="text-slate-200">
-                              <strong className="text-purple-300">知能線:</strong>
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500 text-white ml-2">
+                            <div className="absolute -left-7 top-0 w-4 h-4 rounded-none bg-[var(--retro-accent)] border-2 border-[var(--retro-bg)]"></div>
+                            <p className="text-[var(--retro-text)]">
+                              <strong className="text-[var(--retro-main)]">知能線:</strong>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-none text-xs font-medium bg-blue-700 text-white ml-2 border border-blue-500">
                                 長さ: {handAnalysis.headLine.length}
                               </span>
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500 text-white ml-2">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-none text-xs font-medium bg-yellow-700 text-white ml-2 border border-yellow-500">
                                 タイプ: {handAnalysis.headLine.type}
                               </span>
                               <br />
@@ -329,10 +334,10 @@ function App() {
                         {/* ポスト3（感情線） */}
                         {handAnalysis?.heartLine && (
                           <div className="relative">
-                            <div className="absolute -left-7 top-0 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900"></div>
-                            <p className="text-slate-200">
-                              <strong className="text-purple-300">感情線:</strong>
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500 text-white ml-2">
+                            <div className="absolute -left-7 top-0 w-4 h-4 rounded-none bg-[var(--retro-accent)] border-2 border-[var(--retro-bg)]"></div>
+                            <p className="text-[var(--retro-text)]">
+                              <strong className="text-[var(--retro-main)]">感情線:</strong>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-none text-xs font-medium bg-blue-700 text-white ml-2 border border-blue-500">
                                 長さ: {handAnalysis.heartLine.length}
                               </span>
                               <br />
@@ -344,9 +349,9 @@ function App() {
                         {/* ポスト4（イタコ解釈） */}
                         {itakoResult?.interpretation && (
                           <div className="relative">
-                            <div className="absolute -left-7 top-0 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900"></div>
-                            <p className="text-slate-200">
-                              <strong className="text-purple-300">解釈 ({selectedCharacter?.name}):</strong> {itakoResult.interpretation}
+                            <div className="absolute -left-7 top-0 w-4 h-4 rounded-none bg-[var(--retro-accent)] border-2 border-[var(--retro-bg)]"></div>
+                            <p className="text-[var(--retro-text)]">
+                              <strong className="text-[var(--retro-main)]">解釈 ({selectedCharacter?.name}):</strong> {itakoResult.interpretation}
                             </p>
                           </div>
                         )}
@@ -354,9 +359,9 @@ function App() {
                         {/* ポスト5（アドバイス） */}
                         {itakoResult?.advice && (
                           <div className="relative">
-                            <div className="absolute -left-7 top-0 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900"></div>
-                            <p className="text-slate-200">
-                              <strong className="text-purple-300">アドバイス ({selectedCharacter?.name}):</strong> {itakoResult.advice}
+                            <div className="absolute -left-7 top-0 w-4 h-4 rounded-none bg-[var(--retro-accent)] border-2 border-[var(--retro-bg)]"></div>
+                            <p className="text-[var(--retro-text)]">
+                              <strong className="text-[var(--retro-main)]">アドバイス ({selectedCharacter?.name}):</strong> {itakoResult.advice}
                             </p>
                           </div>
                         )}
@@ -364,16 +369,16 @@ function App() {
                         {/* ポスト6（未来の展望） */}
                         {itakoResult?.future && (
                           <div className="relative">
-                            <div className="absolute -left-7 top-0 w-4 h-4 rounded-full bg-purple-500 border-2 border-slate-900"></div>
-                            <p className="text-slate-200">
-                              <strong className="text-purple-300">未来 ({selectedCharacter?.name}):</strong> {itakoResult.future}
+                            <div className="absolute -left-7 top-0 w-4 h-4 rounded-none bg-[var(--retro-accent)] border-2 border-[var(--retro-bg)]"></div>
+                            <p className="text-[var(--retro-text)]">
+                              <strong className="text-[var(--retro-main)]">未来 ({selectedCharacter?.name}):</strong> {itakoResult.future}
                             </p>
                           </div>
                         )}
                       </div>
                     </div>
                   )}
-                  <button onClick={resetState} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 mt-8 w-full">
+                  <button onClick={resetState} className="bg-[var(--retro-main)] hover:bg-[var(--retro-button-hover)] text-[var(--retro-text)] font-bold py-3 px-6 rounded-none transition-colors duration-100 mt-8 w-full border-2 border-[var(--retro-border)]">
                     もう一度占う
                   </button>
                 </div>
@@ -388,7 +393,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 flex items-center justify-center font-sans">
+    <div className="min-h-screen bg-[var(--retro-bg)] text-[var(--retro-text)] p-4 md:p-8 flex items-center justify-center font-sans">
       {renderScreen()}
     </div>
   );
