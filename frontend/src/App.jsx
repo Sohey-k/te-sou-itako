@@ -256,7 +256,7 @@ function App() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-[var(--retro-card-bg)] border-2 border-[var(--retro-border)] rounded-none shadow-none max-w-4xl w-full">
             {error ? (
               <div className="md:col-span-2 text-center">
-                <h2 className="text-3xl font-['Press_Start_2P'] text-red-500 mb-4">エラー</h2>
+                <h2 className="text-3xl font-['Press_Start_2P'] text-[var(--retro-text)] text-red-500 mb-4">ERROR!!</h2>
                 <p className="text-red-400 text-[var(--retro-text)]">{error}</p>
                 <button onClick={resetState} className="bg-[var(--retro-main)] hover:bg-[var(--retro-button-hover)] text-[var(--retro-text)] font-bold py-3 px-6 rounded-none transition-colors duration-100 mt-8 border-2 border-[var(--retro-border)]">
                   もう一度占う
