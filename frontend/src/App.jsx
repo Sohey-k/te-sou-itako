@@ -132,14 +132,43 @@ function App() {
     switch (screen) {
       case 'top':
         return (
+          // 外側のコンテナからは「group」を削除
           <div className="flex flex-col items-center justify-center p-6 bg-[var(--retro-card-bg)] border-2 border-[var(--retro-border)] rounded-none shadow-none max-w-md w-full text-center">
             <h1 className="text-4xl font-['Press_Start_2P'] text-[var(--retro-text)] mb-4">PALM AI ITAKO</h1>
-            <img 
-              src="/assets/title.gif" 
-              alt="PALM AI ITAKO Title" 
-              style={{ width: '350px', margin: '0', display: 'block' }} 
-            />
-            <p className="text-lg text-[var(--retro-text)] mb-8">あなたの手相をAIイタコが読み解きます。</p>
+            
+            {/* ★画像コンテナに「group」を移動。これで画像エリアにマウスが乗った時だけ反応します */}
+            <div 
+              className="group relative flex justify-center items-center overflow-hidden"
+              style={{ width: '350px', height: 'auto', margin: '0' }}
+            >
+              {/* 画像エリアコンテナ（groupを設定） */}
+            <div 
+              className="group relative flex justify-center items-center overflow-hidden"
+              style={{ width: '350px', height: 'auto', margin: '0' }}
+            >
+              {/* 1. 背景のネオン手相画像 (bg.png) */}
+              <img 
+                src="/assets/bg.png" 
+                alt="PALM AI ITAKO Background" 
+                // ★前回の opacity-20（うっすら）を採用
+                className="absolute inset-0 w-full h-full object-contain opacity-0 scale-95 group-hover:opacity-60 group-hover:scale-100 transition-all duration-1000 ease-out pointer-events-none"
+              />
+
+              {/* 2. 前面の動く透過GIF (title.gif) */}
+              <img 
+                src="/assets/title.gif" 
+                alt="PALM AI ITAKO Title" 
+                // ★className を大幅に変更します
+                className="relative z-10 w-full h-auto block opacity-100 transition-all duration-1000 ease-out group-hover:opacity-0"
+                // 初期状態：不透明(opacity-100)
+                // ホバー時：完全に透明(opacity-0)になる
+                // 演出：1秒(duration-1000)かけてじわ〜っと消える
+              />
+            </div>
+            </div>
+            
+            {/* 下部のテキスト部分のマージンを調整（mt-4を追加して画像との隙間を確保） */}
+            <p className="text-lg text-[var(--retro-text)] mt-4 mb-8">あなたの手相をAIイタコが読み解きます。</p>
             <input
               type="file"
               accept="image/*"
@@ -155,7 +184,6 @@ function App() {
             </button>
           </div>
         );
-
       case 'preview':
         return (
           <div className="flex flex-col items-center justify-center p-6 bg-[var(--retro-card-bg)] border-2 border-[var(--retro-border)] rounded-none shadow-none max-w-md w-full text-center">
