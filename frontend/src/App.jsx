@@ -148,7 +148,7 @@ function App() {
             >
               {/* 1. 背景のネオン手相画像 (bg.png) */}
               <img 
-                src="/assets/bg.png" 
+                src="/assets/bg2.png" 
                 alt="PALM AI ITAKO Background" 
                 // ★前回の opacity-20（うっすら）を採用
                 className="absolute inset-0 w-full h-full object-contain opacity-0 scale-95 group-hover:opacity-60 group-hover:scale-100 transition-all duration-1000 ease-out pointer-events-none"
@@ -156,10 +156,10 @@ function App() {
 
               {/* 2. 前面の動く透過GIF (title.gif) */}
               <img 
-                src="/assets/title.gif" 
+                src="/assets/title2.gif" 
                 alt="PALM AI ITAKO Title" 
                 // ★className を大幅に変更します
-                className="relative z-10 w-full h-auto block opacity-100 transition-all duration-1000 ease-out group-hover:opacity-0"
+                className="relative z-10 w-28 h-auto block opacity-100 transition-all duration-1000 ease-out group-hover:opacity-0"
                 // 初期状態：不透明(opacity-100)
                 // ホバー時：完全に透明(opacity-0)になる
                 // 演出：1秒(duration-1000)かけてじわ〜っと消える
