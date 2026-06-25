@@ -18,6 +18,5 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TE_SOU_ITAKO_F7136 }}
           channelId: live
           projectId: te-sou-itako-f7136
-        # ★ここから下の2行を新しく追加します！
         env:
           ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
