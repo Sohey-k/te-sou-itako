@@ -144,7 +144,7 @@ function App() {
 
   // 状態管理（コンポーネントの先頭付近に追加）
   const [isTapped, setIsTapped] = useState(false);
-  const [gifSrc, setGifSrc] = useState("/assets/title2.gif");
+  const [gifSrc, setGifSrc] = useState("/assets/title3.gif");
 
   // ★ここを書き換えます！
   const handleImageAreaClick = () => {
@@ -152,7 +152,7 @@ function App() {
     setIsTapped((prev) => !prev);
 
     // イタコGIFを強制的に最初から巻き戻して再生する処理（これは毎回走らせる）
-    setGifSrc(`/assets/title2.gif?t=${new Date().getTime()}`);
+    setGifSrc(`/assets/title3.gif?t=${new Date().getTime()}`);
   };
 
   // 各画面のレンダリング
@@ -186,7 +186,7 @@ function App() {
                 src={gifSrc}
                 alt="PALM AI ITAKO Title"
                 // ★ こちらも isTapped に連動して、背景が表示されるときはイタコが消え、背景が消えるときはイタコが現れます
-                className={`relative z-10 w-28 h-auto block transition-all duration-1000 ease-out ${
+                className={`relative z-10 w-32 h-auto block transition-all duration-1000 ease-out ${
                   isTapped ? "opacity-0" : "opacity-100"
                 }`}
               />
@@ -194,7 +194,7 @@ function App() {
 
             {/* 下部のテキスト・ボタン部分 */}
             <p className="text-lg text-[var(--retro-text)] mt-4 mb-8">
-              あなたの手相をAIイタコが読み解きます。
+              あなたの手相をAI霊媒師が読み解きます。
             </p>
             <input
               type="file"
@@ -245,7 +245,7 @@ function App() {
         return (
           <div className="flex flex-col items-center justify-center p-6 bg-[var(--retro-card-bg)] border-2 border-[var(--retro-border)] rounded-none shadow-none max-w-2xl w-full text-center">
             <h2 className="text-3xl font-['Press_Start_2P'] text-[var(--retro-text)] mb-6">
-              イタコを選ぶ
+              キャラを選ぶ
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-full">
               {characters.map((char) => (
@@ -313,7 +313,7 @@ function App() {
             {/* レトロゲーム風のテキスト演出 */}
             <div className="space-y-2 font-['Press_Start_2P'] text-sm">
               <p className="text-[var(--retro-accent)]">
-                ITAKO IS COMMUNICATING WITH GEMINI...
+                SHARMAN IS COMMUNICATING WITH GEMINI...
               </p>
               <p className="text-gray-300 text-xs animate-bounce">
                 しばらくお待ちください
@@ -321,7 +321,7 @@ function App() {
             </div>
 
             <p className="text-[var(--retro-text)] mt-6 border-t-2 border-[var(--retro-border)] pt-4 w-full">
-              イタコが、あなたから送られた手相のログを読み解いています。
+              霊媒師が、あなたから送られた手相のログを読み解いています。
             </p>
           </div>
         );
@@ -361,7 +361,7 @@ function App() {
                 {/* 右側のイタコ神託タイムラインカード */}
                 <div className="p-4 bg-[var(--retro-card-bg)] border-2 border-[var(--retro-border)] rounded-none">
                   <h3 className="text-xl font-bold text-[var(--retro-text)] mb-4">
-                    イタコの神託
+                    霊媒師の神託
                   </h3>
                   {(handAnalysis || itakoResult) && (
                     <div className="space-y-6">
