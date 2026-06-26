@@ -12,6 +12,10 @@ const characters = [
     description: "知的好奇心の探求者",
   },
   { id: "himiko", name: "卑弥呼", description: "神秘的な女王" },
+  { id: "ryoma", name: "坂本龍馬", description: "時代を動かす風雲児" },
+  { id: "hideyoshi", name: "豊臣秀吉", description: "天下無双の出世頭" },
+  { id: "nanba_akinai", name: "難波の商売人", description: "人情味あふれる商人" },
+  { id: "hakata_musume", name: "博多の美人娘", description: "優しく寄り添う博多っ子" }
 ];
 
 function App() {
