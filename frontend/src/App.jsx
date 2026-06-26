@@ -162,7 +162,7 @@ function App() {
         return (
           <div className="flex flex-col items-center justify-center p-6 bg-[var(--retro-card-bg)] border-2 border-[var(--retro-border)] rounded-none shadow-none max-w-md w-full text-center">
             <h1 className="text-4xl font-['Press_Start_2P'] text-[var(--retro-text)] mb-4">
-              PALM AI ITAKO
+              PALM AI SHAMAN
             </h1>
 
             {/* 画像コンテナ */}
@@ -174,7 +174,7 @@ function App() {
               {/* 1. 背景のネオン手相画像 (bg2.png) */}
               <img
                 src="/assets/bg2.png"
-                alt="PALM AI ITAKO Background"
+                alt="PALM AI SHAMAN Background"
                 // ★ isTapped が true なら表示(opacity-60)、false なら非表示(opacity-0)に切り替わるようにしました！
                 className={`absolute inset-0 w-full h-full object-contain transition-all duration-1000 ease-out pointer-events-none ${
                   isTapped ? "opacity-60 scale-100" : "opacity-0 scale-95"
@@ -184,7 +184,7 @@ function App() {
               {/* 2. 前面の動く透過GIF (title2.gif) */}
               <img
                 src={gifSrc}
-                alt="PALM AI ITAKO Title"
+                alt="PALM AI SHAMAN Title"
                 // ★ こちらも isTapped に連動して、背景が表示されるときはイタコが消え、背景が消えるときはイタコが現れます
                 className={`relative z-10 w-32 h-auto block transition-all duration-1000 ease-out ${
                   isTapped ? "opacity-0" : "opacity-100"
@@ -313,7 +313,7 @@ function App() {
             {/* レトロゲーム風のテキスト演出 */}
             <div className="space-y-2 font-['Press_Start_2P'] text-sm">
               <p className="text-[var(--retro-accent)]">
-                SHARMAN IS COMMUNICATING WITH GEMINI...
+                SHAMAN IS COMMUNICATING WITH GEMINI...
               </p>
               <p className="text-gray-300 text-xs animate-bounce">
                 しばらくお待ちください
