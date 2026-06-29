@@ -139,22 +139,16 @@ def analyzeHand(req: https_fn.Request) -> https_fn.Response:
             "手相の分析は客観的に行い、イタコの結果は「{character}」の口調や視点に合わせてください。"
         )
 
-        # 画像処理ロジック
-        decoded_image_data = base64.b64decode(imageData)
-        image_stream = io.BytesIO(decoded_image_data)
-        img = Image.open(image_stream)
+        # ==========================================
+        # 🛠️ 変更後：画像処理ロジック（軽量化版）
+        # ==========================================
+        # 1. フロントで完璧に軽量化（800px / 品質0.7）されたBase64文字列を、バイトデータに復元するだけ！
+        processed_image_bytes = base64.b64decode(imageData)
+        logging.info(f"Received pre-resized image size: {len(processed_image_bytes)} bytes")
+        
+        # ⚠️ Pillow（Image.open）によるデコード、LANCZOSリサイズ、BytesIOへの再保存はすべて不要になったので削除！
 
-        # 最大辺が1024pxになるようにリサイズ
-        max_size = 1024
-        if img.width > max_size or img.height > max_size:
-            logging.info(f"Resizing image from {img.width}x{img.height} to max {max_size}px.")
-            img.thumbnail((max_size, max_size), Image.LANCZOS) # LANCZOSは高品質なリサイズフィルター
-
-        # JPEG形式で圧縮し、BytesIOに保存
-        output_image_stream = io.BytesIO()
-        img.save(output_image_stream, format="JPEG", quality=85)
-        processed_image_bytes = output_image_stream.getvalue()
-        logging.info(f"Processed image size: {len(processed_image_bytes)} bytes")
+        # Gemini APIの呼び出し (新しいSDK形式)
 
         # Gemini APIの呼び出し (新しいSDK形式)
         response = client.models.generate_content(
